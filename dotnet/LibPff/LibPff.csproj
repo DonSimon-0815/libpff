@@ -7,18 +7,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="lib\x64\libpff.dll">
+    <!-- Win32 -->
+    <Content Include="..\..\msvscpp\Release\*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>lib\win32\%(Filename)%(Extension)</Link>
+    </Content>
+
+    <!-- Win64 -->
+    <Content Include="..\..\msvscpp\x64\Release\*.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="lib\x64\zlib.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="lib\x86\libpff.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="lib\x86\zlib.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+      <Link>lib\win64\%(Filename)%(Extension)</Link>
+    </Content>
+  
+</ItemGroup>
+
+  <Target Name="_Test" AfterTargets="Build">
+    <Message Text="### @(Content)" Importance="high"/>
+  </Target>
 
 </Project>
