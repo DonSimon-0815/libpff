@@ -1,0 +1,33 @@
+// AUTOMATICALLY GENERATED. DO NOT MODIFY.
+
+using System.Runtime.InteropServices;
+
+namespace {{ namespace }}
+{
+    internal sealed class {{ classname }} : SafeHandle
+    {
+        private INativeAdapter _native;
+
+        public {{ classname }}(nint handle, INativeAdapter native, bool ownsHandle)
+            : base(nint.Zero, ownsHandle)
+        {
+            _native = native;
+            SetHandle(handle);
+        }
+
+        public override bool IsInvalid => handle == nint.Zero;
+
+        protected override bool ReleaseHandle()
+        {
+            {% if return_type == "void" %}
+            _native.{{ adapter_call }};
+            return true;
+            {% else %}
+            nint tmp = handle;
+            int rc = _native.{{ adapter_call }};
+            handle = nint.Zero;
+            return rc == 1;
+            {% endif %}
+        }
+    }
+}

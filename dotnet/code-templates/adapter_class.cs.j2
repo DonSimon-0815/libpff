@@ -1,0 +1,25 @@
+// AUTOMATICALLY GENERATED. DO NOT MODIFY.
+
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace {{ namespace }}
+{
+    internal sealed class {{ classname }} : INativeAdapter
+    {
+        {% for fn in functions %}
+        public {{ fn.cs_return_type }} {{ fn.cs_name }}({{ fn.params_str }})
+        {
+            {% if fn.cs_return_type == "void" %}
+            {{ native_classname }}.{{ fn.cs_name }}({{ fn.call_args }});
+            {% elif fn.is_special_return and bits == 32 %}
+            int native_result = {{ native_classname }}.{{ fn.cs_name }}({{ fn.call_args }});
+            return native_result;  // 'int' to 'long' (32-Bit Platform)
+            {% else %}
+            return {{ native_classname }}.{{ fn.cs_name }}({{ fn.call_args }});
+            {% endif %}
+        }
+        {% endfor %}
+    }
+}

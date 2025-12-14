@@ -1,3 +1,5 @@
+# AUTOMATICALLY GENERATED. DO NOT MODIFY.
+
 int libpff_attachment_get_type(libpff_item_t* attachment, int* attachment_type, libcerror_error_t** error);
 int libpff_attachment_get_data_size(libpff_item_t* attachment, size64_t* size, libcerror_error_t** error);
 ssize_t libpff_attachment_data_read_buffer(libpff_item_t* attachment, uint8_t* buffer, size_t buffer_size, libcerror_error_t** error);

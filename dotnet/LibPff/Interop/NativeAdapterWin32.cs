@@ -19,12 +19,12 @@ namespace LibPff.Interop
         public long AttachmentDataReadBuffer(IntPtr attachment, byte[] buffer, UIntPtr buffer_size, IntPtr error)
         {
             int native_result = NativeWin32.AttachmentDataReadBuffer(attachment, buffer, buffer_size, error);
-            return native_result;  // 'int' to 'long' (32-Bit Plattforms)
+            return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
         public long AttachmentDataSeekOffset(IntPtr attachment, long offset, int whence, IntPtr error)
         {
             int native_result = NativeWin32.AttachmentDataSeekOffset(attachment, offset, whence, error);
-            return native_result;  // 'int' to 'long' (32-Bit Plattforms)
+            return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
         public int AttachmentGetDataFileIoHandle(IntPtr attachment, out IntPtr file_io_handle, IntPtr error)
         {
@@ -773,12 +773,12 @@ namespace LibPff.Interop
         public long RecordEntryReadBuffer(IntPtr record_entry, byte[] buffer, UIntPtr buffer_size, IntPtr error)
         {
             int native_result = NativeWin32.RecordEntryReadBuffer(record_entry, buffer, buffer_size, error);
-            return native_result;  // 'int' to 'long' (32-Bit Plattforms)
+            return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
         public long RecordEntrySeekOffset(IntPtr record_entry, long offset, int whence, IntPtr error)
         {
             int native_result = NativeWin32.RecordEntrySeekOffset(record_entry, offset, whence, error);
-            return native_result;  // 'int' to 'long' (32-Bit Plattforms)
+            return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
         public int RecordSetFree(out IntPtr record_set, IntPtr error)
         {

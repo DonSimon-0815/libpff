@@ -1,0 +1,14 @@
+// AUTOMATICALLY GENERATED. DO NOT MODIFY.
+
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace {{ namespace }}
+{
+    public interface {{ classname }}
+    {
+        {% for fn in functions %}
+        {{ fn.return_type }} {{ fn.cs_name }}({{ fn.params_str }});
+        {% endfor %}
+    }
+}

@@ -1,0 +1,25 @@
+// AUTOMATICALLY GENERATED. DO NOT MODIFY.
+
+using System.Runtime.InteropServices;
+
+namespace {{ namespace }}
+{
+    public static class {{ classname }}
+    {
+        public static INativeAdapter Create()
+        {
+            INativeAdapter adapter;
+            {% for p in platforms %}
+            {{ "if" if loop.first else "else if" }} ({{ arch_info[p.bits] }} && {{ runtime_info[p.os] }})
+            {
+                adapter = new {{ p.adapter_class }}();
+            }
+            {% endfor %}
+            else
+            {
+                throw new PffException($"Operating system {RuntimeInformation.OSDescription} not supported.");
+            }
+            return adapter;
+        }
+    }
+}
