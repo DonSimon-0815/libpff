@@ -1,0 +1,36 @@
+﻿namespace LibPff
+{
+    public enum ItemType
+    {
+        Undefined = 0,
+        Activity = 1,
+        Appointment = 2,
+        Attachment  = 3,
+        Attachments = 4,
+        Common = 5,
+        Configuration = 6,
+        ConflictMessage = 7,
+        Contact = 8,
+        DistributionList = 9,
+        Document = 10,
+        Email = 11,
+        Fax = 13,
+        Folder = 14,
+        Meeting = 15,
+        Mms = 16,
+        EmailSmime = 12,
+        Note = 17,
+        PostingNote = 18,
+        Recipients = 19,
+        RssFedd = 20,
+        Sharing = 21,
+        Sms = 22,
+        SubAssociatedContents = 23,
+        SubFolders = 24,
+        SubMessages = 25,
+        Task = 26,
+        TaskRequest = 27,
+        Voicemail = 28,
+        Unknown = 29,
+    }
+}
