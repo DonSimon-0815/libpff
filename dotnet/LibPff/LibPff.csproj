@@ -19,10 +19,6 @@
       <Link>lib\win64\%(Filename)%(Extension)</Link>
     </Content>
   
-</ItemGroup>
-
-  <Target Name="_Test" AfterTargets="Build">
-    <Message Text="### @(Content)" Importance="high"/>
-  </Target>
+  </ItemGroup>
 
 </Project>
