@@ -2,10 +2,14 @@ using LibPff.Interop;
 
 namespace LibPff.Model
 {
+    // TODO: use MAPI enums
+
     internal class Attachment : Item, IAttachment
     {
         private long? _sizeCache;
-        public Attachment(nint handle, INativeAdapter native, bool ownsHandle) : base(handle, native, ownsHandle)
+
+        public Attachment(nint handle, INativeAdapter native, bool ownsHandle)
+            : base(handle, native, ownsHandle)
         {
         }
 
@@ -13,20 +17,64 @@ namespace LibPff.Model
         {
             get
             {
-                // TODO: get entry EntryType.AttachmentFilenameLong from record
-                //EntryType.AttachmentFilenameShort
-                //EntryType.AttachmentFilenameLong
+                const uint SHORT = 0x3704; // PR_ATTACH_FILENAME
+                const uint LONG = 0x3707; // PR_ATTACH_LONG_FILENAME
+                const uint CID = 0x3712; // PR_ATTACH_CONTENT_ID
 
-                //var record = GetRecordByIdentifier(ATTACH_FILENAME);
-                //Console.WriteLine($"### file-name identifier: {record.Identifier}, filename: {record.ValueUtf8}");
-                //return record.ValueUtf8!;
+                if (TryGetRecordValue(LONG, out string? longName) && !string.IsNullOrWhiteSpace(longName))
+                    return longName;
 
-                // Attachment name might be an entry; without mapping we'll return empty string.
-                return string.Empty;
+                if (TryGetRecordValue(SHORT, out string? shortName) && !string.IsNullOrWhiteSpace(shortName))
+                    return shortName;
+
+                if (TryGetRecordValue(CID, out string? cid) && !string.IsNullOrWhiteSpace(cid))
+                    return cid;
+
+                return "attachment.bin";
             }
         }
 
-        public string? MimeType => null;
+
+        public string? MimeType
+        {
+            get
+            {
+                const uint MIME = 0x370E; // PR_ATTACH_MIME_TAG
+                return TryGetRecordValue(MIME, out string? mime) ? mime : null;
+            }
+        }
+
+
+        public string? ContentId
+        {
+            get
+            {
+                const uint CID = 0x3712; // PR_ATTACH_CONTENT_ID
+                return TryGetRecordValue(CID, out string? cid) ? cid : null;
+            }
+        }
+
+        public bool IsInline
+        {
+            get
+            {
+                // Inline attachments typically have a ContentId
+                const uint CID = 0x3712;
+                if (TryGetRecordValue(CID, out string? cid) && !string.IsNullOrWhiteSpace(cid))
+                    return true;
+
+                // Some clients set PR_ATTACH_FLAGS (0x3714)
+                const uint FLAGS = 0x3714;
+                if (TryGetRecordValue(FLAGS, out uint flags))
+                {
+                    // Bit 0x00000004 = ATTACHMENT_IS_INLINE
+                    if ((flags & 0x00000004) != 0)
+                        return true;
+                }
+
+                return false;
+            }
+        }
 
         public long Size
         {
@@ -40,23 +88,18 @@ namespace LibPff.Model
             }
         }
 
-        public byte[]? Data
-        {
-            get
-            {
-                return ReadAllDataAsync().GetAwaiter().GetResult();
-            }
-        }
+        public byte[]? Data => ReadAllDataAsync().GetAwaiter().GetResult();
 
         public Stream? OpenDataStream()
         {
-            // Implement chunked read into MemoryStream (simple variant).
             long total = Size;
             if (total == 0) return Stream.Null;
+
             const int chunk = 64 * 1024;
             var ms = new MemoryStream((int)Math.Min(total, int.MaxValue));
             var buf = new byte[Math.Min(chunk, (int)total)];
             long read = 0;
+
             while (read < total)
             {
                 int toRead = (int)Math.Min(buf.Length, total - read);
@@ -67,6 +110,7 @@ namespace LibPff.Model
                 ms.Write(buf, 0, got);
                 read += got;
             }
+
             ms.Position = 0;
             return ms;
         }
@@ -80,8 +124,5 @@ namespace LibPff.Model
             await s.CopyToAsync(ms);
             return ms.ToArray();
         }
-
-        public bool IsInline => false;
-        public string? ContentId => null;
     }
 }
