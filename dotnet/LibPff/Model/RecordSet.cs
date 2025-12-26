@@ -8,7 +8,7 @@ namespace LibPff.Model
         protected readonly RecordSetHandle Handle;
         protected readonly INativeAdapter Native;
 
-        private nint RawHandle
+        internal nint RawHandle
         {
             get
             {

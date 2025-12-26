@@ -10,7 +10,8 @@ namespace LibPff.Model
         protected readonly ItemHandle Handle;
         protected readonly INativeAdapter Native;
 
-        private Dictionary<uint, List<RecordEntry>>? _recordIndex;
+        private Dictionary<uint, RecordEntry>? _recordIndex;
+        private IReadOnlyList<RecordSet>? _recordSets;
 
         protected nint RawHandle
         {
@@ -69,15 +70,26 @@ namespace LibPff.Model
         {
             get
             {
-                var list = new List<RecordSet>();
+                if (_recordSets != null)
+                    return _recordSets;
+
                 int count = RecordsCount;
-                for (var i = 0; i < count; i++)
+                var list = new List<RecordSet>(count);
+
+                for (int i = 0; i < count; i++)
                 {
-                    list.Add(GetRecordSet(i)!);
+                    int rc = Native.ItemGetRecordSetByIndex(RawHandle, i, out nint handle, nint.Zero);
+                    if (rc != 1 || handle == nint.Zero)
+                        throw new PffException($"ItemGetRecordSetByIndex failed: {rc}", rc);
+
+                    list.Add(new RecordSet(handle, Native, ownsHandle: true));
                 }
+
+                _recordSets = list;
                 return list;
             }
         }
+
 
         protected RecordSet? GetRecordSet(int index)
         {
@@ -86,80 +98,38 @@ namespace LibPff.Model
             return new RecordSet(handle, Native, true);
         }
 
-        protected Dictionary<uint, List<RecordEntry>> RecordIndex
+        protected Dictionary<uint, RecordEntry> RecordIndex
         {
             get
             {
-                if (_recordIndex != null) return _recordIndex; 
-                var dict = new Dictionary<uint, List<RecordEntry>>();
-                foreach (var rs in RecordSets)
-                {
-                    foreach (var entry in rs.Entries)
-                    {
-                        if (!dict.TryGetValue(entry.EntryType, out var list))
-                        {
-                            list = new List<RecordEntry>();
-                            dict[entry.EntryType] = list;
-                        }
-                        list.Add(entry);
-                    }
-                }
-                _recordIndex = dict;
-                return dict;
+                return _recordIndex ??= new Dictionary<uint, RecordEntry>();
             }
         }
-
-        //protected bool TryGetRecordValue<T>(uint entryType, out T? value)
-        //{
-        //    value = default;
-        //    if (!RecordIndex.TryGetValue(entryType, out var entries) || entries.Count == 0) return false;
-        //    var entry = entries[0];
-        //    object? result = entry.ValueType switch
-        //    {
-        //        0x001F => entry.GetUtf16String(), // PT_UNICODE
-        //        0x001E => entry.GetUtf8String(), // PT_STRING8
-        //        0x000B => entry.GetBoolean(), // PT_BOOLEAN
-        //        0x0002 => entry.GetInt16(), // PT_I2
-        //        0x0003 => entry.GetInt32(), // PT_I4
-        //        0x0005 => entry.GetDouble(), // PT_DOUBLE
-        //        0x0014 => entry.GetInt64(), // PT_I8
-        //        0x0040 => entry.GetFileTime(), // PT_SYSTIME
-        //        0x0048 => entry.GetGuid(), // PT_CLSID
-        //             _ => entry.GetRawData()
-        //    };
-        //    if (result is T casted)
-        //    {
-        //        value = casted;
-        //        return true;
-        //    }
-        //    return false;
-        //}
 
         protected bool TryGetRecordValue<T>(uint entryType, out T? value)
         {
             value = default;
 
-            // 1) Wenn wir den EntryType bereits kennen → sofort zurück
-            if (_recordIndex != null &&
-                _recordIndex.TryGetValue(entryType, out var cachedEntries) &&
-                cachedEntries.Count > 0)
-            {
-                return TryConvertRecordEntry(cachedEntries[0], out value);
-            }
+            if (_recordIndex != null && _recordIndex.TryGetValue(entryType, out var cached))
+                return TryConvertRecordEntry(cached, out value);
 
-            // 2) Sonst: inkrementell suchen
             foreach (var rs in RecordSets)
             {
-                foreach (var entry in rs.Entries)
+                int rc = Native.RecordSetGetEntryByType(
+                    rs.RawHandle,
+                    entryType,
+                    0, // valueType does not matter
+                    out var entryHandle,
+                    0,
+                    nint.Zero
+                );
+
+                if (rc == 1 && entryHandle != nint.Zero)
                 {
-                    if (entry.EntryType != entryType)
-                        continue;
+                    var entry = new RecordEntry(entryHandle, Native, ownsHandle: true);
 
-                    // Cache initialisieren falls nötig
                     _recordIndex ??= new();
-
-                    // Nur diesen EntryType cachen
-                    _recordIndex[entryType] = new List<RecordEntry> { entry };
+                    _recordIndex[entryType] = entry;
 
                     return TryConvertRecordEntry(entry, out value);
                 }
