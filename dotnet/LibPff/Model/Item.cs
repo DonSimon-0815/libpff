@@ -1,4 +1,5 @@
 ﻿using LibPff.Interop;
+using System.Text;
 
 namespace LibPff.Model
 {
@@ -110,15 +111,37 @@ namespace LibPff.Model
         {
             value = default;
 
+            // 1) Zuerst: Message-EntryValue-API (MAPI-Properties)
+            if (typeof(T) == typeof(string))
+            {
+                if (Native.MessageGetEntryValueUtf8StringSize(RawHandle, entryType, out nuint size, nint.Zero) == 1 &&
+                    size > 0)
+                {
+                    var buf = new byte[(int)size];
+                    if (Native.MessageGetEntryValueUtf8String(RawHandle, entryType, buf, size, nint.Zero) == 1)
+                    {
+                        int valid = buf.Length;
+                        if (valid > 0 && buf[valid - 1] == 0)
+                            valid--;
+
+                        string s = Encoding.UTF8.GetString(buf, 0, valid);
+                        value = (T)(object)s;
+                        return true;
+                    }
+                }
+            }
+
+            // 2) Cache prüfen
             if (_recordIndex != null && _recordIndex.TryGetValue(entryType, out var cached))
                 return TryConvertRecordEntry(cached, out value);
 
+            // 3) RecordSets durchsuchen (interne Properties)
             foreach (var rs in RecordSets)
             {
                 int rc = Native.RecordSetGetEntryByType(
                     rs.RawHandle,
                     entryType,
-                    0, // valueType does not matter
+                    0,
                     out var entryHandle,
                     0,
                     nint.Zero

@@ -22,6 +22,11 @@
         string? BodyHtml { get; }
 
         /// <summary>
+        /// Gets the Body (HTML→Text, Plaintext, MIME-Fallback)
+        /// </summary>
+        string? BodyText { get; }
+
+        /// <summary>
         /// Asynchronously retrieve the plain text body. Implementations may load lazily.
         /// </summary>
         Task<string?> GetBodyPlainTextAsync();
@@ -31,6 +36,11 @@
         /// Returns null when no body is available or streaming unsupported.
         /// </summary>
         Stream? OpenPlainTextBodyStream();
+
+        /// <summary>
+        /// Returns the transport headers of the message, if available.
+        /// </summary>
+        string? TransportHeaders { get; }
 
         /// <summary>
         /// Returns the sent time of the message, if available.

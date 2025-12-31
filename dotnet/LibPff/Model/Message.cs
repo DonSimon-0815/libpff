@@ -1,3 +1,4 @@
+﻿using HtmlAgilityPack;
 using LibPff.Interop;
 using System.Text;
 
@@ -17,7 +18,6 @@ namespace LibPff.Model
                 return result && subject != null ? subject : "<no subject>";
             }
         }
-
         public string? BodyPlainText
         {
             get
@@ -32,23 +32,83 @@ namespace LibPff.Model
                 }
             }
         }
+        public string? BodyHtml
+        {
+            get
+            {
+                int rc = Native.MessageGetHtmlBodySize(RawHandle, out nuint size, nint.Zero);
+                if (rc != 1 || size == 0)
+                    return null;
 
-        public string? BodyHtml => null;
+                int len = checked((int)size);
+                var buf = new byte[len];
+
+                rc = Native.MessageGetHtmlBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
+                if (rc != 1)
+                    return null;
+
+                int valid = buf.Length;
+                if (valid > 0 && buf[valid - 1] == 0)
+                    valid--;
+
+                return Encoding.UTF8.GetString(buf, 0, valid);
+            }
+        }
+
+        public string? BodyText
+        {
+            get
+            {
+                // 1) HTML → Text
+                if (BodyHtml is { } html)
+                {
+                    var text = HtmlToText(html);
+                    if (!string.IsNullOrWhiteSpace(text))
+                        return text;
+                }
+
+                // 2) Plaintext
+                if (BodyPlainText is { } plain && !string.IsNullOrWhiteSpace(plain))
+                    return plain;
+
+                // 3) Optional: MIME-Fallback über Attachments
+                // (nur wenn du das wirklich brauchst)
+                // foreach (var att in Attachments) { ... }
+
+                return null;
+            }
+        }
+
 
         public async Task<string?> GetBodyPlainTextAsync()
         {
-            // check size first
+            // 1) Versuche libpff-Plaintext-Body
             int rc = Native.MessageGetPlainTextBodySize(RawHandle, out nuint size, nint.Zero);
-            if (rc != 1) return null;
-            int len = (int)size;
-            if (len <= 0) return string.Empty;
-            var buf = new byte[len];
-            rc = Native.MessageGetPlainTextBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
-            if (rc != 1) return null;
-            int valid = buf.Length;
-            if (buf[buf.Length - 1] == 0) valid = buf.Length - 1;
-            return await Task.FromResult(Encoding.UTF8.GetString(buf, 0, valid));
+            if (rc == 1 && size > 0)
+            {
+                int len = checked((int)size);
+                var buf = new byte[len];
+
+                rc = Native.MessageGetPlainTextBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
+                if (rc == 1)
+                {
+                    int valid = buf.Length;
+                    if (valid > 0 && buf[valid - 1] == 0)
+                        valid--;
+
+                    var text = Encoding.UTF8.GetString(buf, 0, valid);
+                    return await Task.FromResult(text);
+                }
+            }
+
+            // 2) Fallback: PR_BODY (0x1000) als Unicode/String
+            const uint PR_BODY = 0x1000;
+            if (TryGetRecordValue(PR_BODY, out string? bodyProp) && !string.IsNullOrWhiteSpace(bodyProp))
+                return bodyProp;
+
+            return null;
         }
+
 
         public Stream? OpenPlainTextBodyStream()
         {
@@ -106,11 +166,69 @@ namespace LibPff.Model
             }
         }
 
-        public string? Sender => null;
+        public string? Sender
+        {
+            get
+            {
+                // PR_SENDER_EMAIL_ADDRESS
+                const uint SENDER_EMAIL = 0x0C1F;
+                if (TryGetRecordValue(SENDER_EMAIL, out string? email) && !string.IsNullOrWhiteSpace(email))
+                    return email;
 
-        public IReadOnlyList<string> RecipientsTo => Array.Empty<string>();
-        public IReadOnlyList<string> RecipientsCc => Array.Empty<string>();
-        public IReadOnlyList<string> RecipientsBcc => Array.Empty<string>();
+                // PR_SENDER_NAME
+                const uint SENDER_NAME = 0x0C1A;
+                if (TryGetRecordValue(SENDER_NAME, out string? name) && !string.IsNullOrWhiteSpace(name))
+                    return name;
+
+                return null;
+            }
+        }
+
+        public string? TransportHeaders
+        {
+            get
+            {
+                const uint HEADERS = 0x007D; // PR_TRANSPORT_MESSAGE_HEADERS
+                return TryGetRecordValue(HEADERS, out string? headers) ? headers : null;
+            }
+        }
+
+        public IReadOnlyList<string> RecipientsTo => GetRecipients("to");
+        public IReadOnlyList<string> RecipientsCc => GetRecipients("cc");
+        public IReadOnlyList<string> RecipientsBcc => GetRecipients("bcc");
+
+        private IReadOnlyList<string> GetRecipients(string field)
+        {
+            var headers = TransportHeaders;
+            if (string.IsNullOrWhiteSpace(headers))
+                return Array.Empty<string>();
+
+            try
+            {
+                // künstliche Minimal-Mail: Header + Leerzeile
+                var raw = headers + "\r\n\r\n";
+                using var ms = new MemoryStream(Encoding.ASCII.GetBytes(raw));
+                var msg = MimeKit.MimeMessage.Load(ms);
+
+                IEnumerable<MimeKit.InternetAddress> addrs = field.ToLowerInvariant() switch
+                {
+                    "to" => msg.To,
+                    "cc" => msg.Cc,
+                    "bcc" => msg.Bcc,
+                    _ => Array.Empty<MimeKit.InternetAddress>()
+                };
+
+                return addrs
+                    .OfType<MimeKit.MailboxAddress>()
+                    .Select(a => a.Address)
+                    .Where(a => !string.IsNullOrWhiteSpace(a))
+                    .ToArray();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
 
         public int AttachmentCount
         {
@@ -175,6 +293,51 @@ namespace LibPff.Model
             value = null;
             // not implemented generically here
             return false;
+        }
+
+        private string? ExtractTextFromMimeAttachment(byte[] data)
+        {
+            try
+            {
+                var msg = MimeKit.MimeMessage.Load(new MemoryStream(data));
+
+                string? Extract(MimeKit.MimeEntity part)
+                {
+                    switch (part)
+                    {
+                        case MimeKit.TextPart text:
+                            return text.Text;
+
+                        case MimeKit.Multipart multipart:
+                            foreach (var sub in multipart)
+                            {
+                                var result = Extract(sub);
+                                if (result != null)
+                                    return result;
+                            }
+                            break;
+                    }
+                    return null;
+                }
+
+                return Extract(msg.Body);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string? HtmlToText(string? html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return null;
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            var text = doc.DocumentNode.InnerText;
+            return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
         }
     }
 }
