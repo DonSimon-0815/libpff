@@ -22,6 +22,11 @@
         string? BodyHtml { get; }
 
         /// <summary>
+        /// Gets the RTF body of the message, if available.
+        /// </summary>
+        string? BodyRtf { get; }
+
+        /// <summary>
         /// Gets the Body (HTML→Text, Plaintext, MIME-Fallback)
         /// </summary>
         string? BodyText { get; }

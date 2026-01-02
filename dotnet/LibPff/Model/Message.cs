@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using LibPff.Interop;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace LibPff.Model
 {
@@ -32,26 +33,64 @@ namespace LibPff.Model
                 }
             }
         }
+
         public string? BodyHtml
         {
             get
             {
+                // 1) RTF → HTML (beste Qualität)
+                if (BodyRtf is { } rtf)
+                {
+                    var htmlFromRtf = RtfToHtml(rtf);
+                    if (!string.IsNullOrWhiteSpace(htmlFromRtf))
+                        return WrapHtmlUtf8(htmlFromRtf);
+                }
+
+                // 2) HTML aus PST (Fallback)
                 int rc = Native.MessageGetHtmlBodySize(RawHandle, out nuint size, nint.Zero);
+                if (rc == 1 && size > 0)
+                {
+                    int len = checked((int)size);
+                    var buf = new byte[len];
+
+                    rc = Native.MessageGetHtmlBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
+                    if (rc == 1)
+                    {
+                        int valid = buf.Length;
+                        if (valid > 0 && buf[valid - 1] == 0)
+                            valid--;
+
+                        var html = DecodeBestEffort(buf[..valid]);
+                        if (!string.IsNullOrWhiteSpace(html))
+                            return WrapHtmlUtf8(html);
+                    }
+                }
+
+                // 3) Plaintext → HTML (Notlösung)
+                if (BodyPlainText is { } plain && !string.IsNullOrWhiteSpace(plain))
+                {
+                    var html = "<pre>" + System.Net.WebUtility.HtmlEncode(plain) + "</pre>";
+                    return WrapHtmlUtf8(html);
+                }
+
+                return null;
+            }
+        }
+
+        public string? BodyRtf
+        {
+            get
+            {
+                int rc = Native.MessageGetRtfBodySize(RawHandle, out nuint size, nint.Zero);
                 if (rc != 1 || size == 0)
                     return null;
 
-                int len = checked((int)size);
-                var buf = new byte[len];
-
-                rc = Native.MessageGetHtmlBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
+                var buf = new byte[(int)size];
+                rc = Native.MessageGetRtfBody(RawHandle, buf, size, nint.Zero);
                 if (rc != 1)
                     return null;
 
-                int valid = buf.Length;
-                if (valid > 0 && buf[valid - 1] == 0)
-                    valid--;
-
-                return Encoding.UTF8.GetString(buf, 0, valid);
+                return Encoding.ASCII.GetString(buf);
             }
         }
 
@@ -59,7 +98,16 @@ namespace LibPff.Model
         {
             get
             {
-                // 1) HTML → Text
+                // 1) RTF → HTML → Text (beste Qualität)
+                if (BodyRtf is { } rtf)
+                {
+                    var htmlFromRtf = RtfToHtml(rtf);
+                    var textFromRtf = HtmlToText(htmlFromRtf);
+                    if (!string.IsNullOrWhiteSpace(textFromRtf))
+                        return textFromRtf;
+                }
+
+                // 2) HTML aus PST → Text
                 if (BodyHtml is { } html)
                 {
                     var text = HtmlToText(html);
@@ -67,18 +115,15 @@ namespace LibPff.Model
                         return text;
                 }
 
-                // 2) Plaintext
+                // 3) Plaintext aus PST
                 if (BodyPlainText is { } plain && !string.IsNullOrWhiteSpace(plain))
                     return plain;
 
-                // 3) Optional: MIME-Fallback über Attachments
-                // (nur wenn du das wirklich brauchst)
-                // foreach (var att in Attachments) { ... }
+                // 4) Optional: MIME-Fallbacks über Attachments
 
                 return null;
             }
         }
-
 
         public async Task<string?> GetBodyPlainTextAsync()
         {
@@ -96,7 +141,7 @@ namespace LibPff.Model
                     if (valid > 0 && buf[valid - 1] == 0)
                         valid--;
 
-                    var text = Encoding.UTF8.GetString(buf, 0, valid);
+                    var text = DecodeBestEffort(buf[..valid]);
                     return await Task.FromResult(text);
                 }
             }
@@ -277,7 +322,8 @@ namespace LibPff.Model
             if (rc != 1) return false;
             int valid = buf.Length;
             if (buf[buf.Length - 1] == 0) valid = buf.Length - 1;
-            value = Encoding.UTF8.GetString(buf, 0, valid);
+            //value = Encoding.UTF8.GetString(buf, 0, valid);
+            value = DecodeBestEffort(buf[..valid]);
             return true;
         }
 
@@ -328,16 +374,89 @@ namespace LibPff.Model
             }
         }
 
-        private static string? HtmlToText(string? html)
+        private string? RtfToHtml(string? rtf)
+        {
+            if (string.IsNullOrWhiteSpace(rtf))
+                return null;
+
+            try
+            {
+                return RtfPipe.Rtf.ToHtml(rtf);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private string? HtmlToText(string? html)
         {
             if (string.IsNullOrWhiteSpace(html))
                 return null;
 
-            var doc = new HtmlDocument();
+            var doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(html);
 
             var text = doc.DocumentNode.InnerText;
             return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+        }
+
+        private static string DecodeBestEffort(byte[] data)
+        {
+            // 1. UTF-8 BOM
+            if (data.Length >= 3 &&
+                data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF)
+            {
+                return Encoding.UTF8.GetString(data, 3, data.Length - 3);
+            }
+
+            // 2. UTF-16 LE BOM
+            if (data.Length >= 2 &&
+                data[0] == 0xFF && data[1] == 0xFE)
+            {
+                return Encoding.Unicode.GetString(data, 2, data.Length - 2);
+            }
+
+            // 3. UTF-16 BE BOM
+            if (data.Length >= 2 &&
+                data[0] == 0xFE && data[1] == 0xFF)
+            {
+                return Encoding.BigEndianUnicode.GetString(data, 2, data.Length - 2);
+            }
+
+            // 4. UTF-8 Heuristik
+            try
+            {
+                var utf8 = Encoding.UTF8.GetString(data);
+                var roundtrip = Encoding.UTF8.GetBytes(utf8);
+
+                if (roundtrip.SequenceEqual(data))
+                    return utf8;
+            }
+            catch { }
+
+            // 5. Windows-1252 (häufigster PST-Fall)
+            try
+            {
+                return Encoding.GetEncoding(1252).GetString(data);
+            }
+            catch { }
+
+            // 6. ISO-8859-1 fallback
+            return Encoding.Latin1.GetString(data);
+        }
+
+        private static string WrapHtmlUtf8(string html)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+                return html;
+
+            return
+                "<!DOCTYPE html><html><head>" +
+                "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />" +
+                "</head><body>" +
+                html +
+                "</body></html>";
         }
     }
 }
