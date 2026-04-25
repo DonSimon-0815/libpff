@@ -1,12 +1,10 @@
 ﻿using LibPff.Interop;
+using LibPff.Utility;
 using System.Text;
 
 namespace LibPff.Model
 {
-    /// <summary>
-    /// Generic PffItem which implements IItem for basic properties via libpff_item_* calls.
-    /// </summary>
-    internal class Item :  IItem
+    internal class Item : IItem
     {
         protected readonly ItemHandle Handle;
         protected readonly INativeAdapter Native;
@@ -19,7 +17,7 @@ namespace LibPff.Model
             get
             {
                 if (Handle.IsInvalid || Handle.IsClosed)
-                    throw new ObjectDisposedException(nameof(File));
+                    throw new ObjectDisposedException(nameof(Item));
 
                 return Handle.DangerousGetHandle();
             }
@@ -35,8 +33,22 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.ItemGetIdentifier(RawHandle, out uint identifier, nint.Zero);
-                if (rc != 1) throw new PffException($"ItemGetIdentifier failed: {rc}", rc);
+                IntPtr error = IntPtr.Zero;
+                int rc = Native.ItemGetIdentifier(RawHandle, out uint identifier, out error);
+
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.ItemGetIdentifier),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 return (int)identifier;
             }
         }
@@ -45,8 +57,22 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.ItemGetType(RawHandle, out byte itemType, nint.Zero);
-                if (rc != 1) throw new PffException($"ItemGetType failed: {rc}", rc);
+                IntPtr error = IntPtr.Zero;
+                int rc = Native.ItemGetType(RawHandle, out byte itemType, out error);
+
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.ItemGetType),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 return itemType switch
                 {
                     1 => ItemType.Folder,
@@ -61,8 +87,22 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.ItemGetNumberOfRecordSets(RawHandle, out int count, nint.Zero);
-                if (rc != 1) throw new PffException($"ItemGetNumberOfRecordSets failed: {rc}", rc);
+                IntPtr error = IntPtr.Zero;
+                int rc = Native.ItemGetNumberOfRecordSets(RawHandle, out int count, out error);
+
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.ItemGetNumberOfRecordSets),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 return count;
             }
         }
@@ -79,9 +119,21 @@ namespace LibPff.Model
 
                 for (int i = 0; i < count; i++)
                 {
-                    int rc = Native.ItemGetRecordSetByIndex(RawHandle, i, out nint handle, nint.Zero);
-                    if (rc != 1 || handle == nint.Zero)
-                        throw new PffException($"ItemGetRecordSetByIndex failed: {rc}", rc);
+                    IntPtr error = IntPtr.Zero;
+                    int rc = Native.ItemGetRecordSetByIndex(RawHandle, i, out nint handle, out error);
+
+                    ReturnCode.Check(
+                        rc,
+                        error,
+                        nameof(Native.ItemGetRecordSetByIndex),
+                        ptr =>
+                        {
+                            var sb = new StringBuilder(4096);
+                            Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                            return sb.ToString();
+                        },
+                        ptr => Native.ErrorFree(out ptr)
+                    );
 
                     list.Add(new RecordSet(handle, Native, ownsHandle: true));
                 }
@@ -91,63 +143,80 @@ namespace LibPff.Model
             }
         }
 
-
         protected RecordSet? GetRecordSet(int index)
         {
-            int rc = Native.ItemGetRecordSetByIndex(RawHandle, index, out nint handle, nint.Zero);
-            if (rc != 1 || handle == nint.Zero) throw new PffException($"ItemGetRecordSetByIndex failed: {rc}", rc);
+            IntPtr error = IntPtr.Zero;
+            int rc = Native.ItemGetRecordSetByIndex(RawHandle, index, out nint handle, out error);
+
+            ReturnCode.Check(
+                rc,
+                error,
+                nameof(Native.ItemGetRecordSetByIndex),
+                ptr =>
+                {
+                    var sb = new StringBuilder(4096);
+                    Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                    return sb.ToString();
+                },
+                ptr => Native.ErrorFree(out ptr)
+            );
+
             return new RecordSet(handle, Native, true);
         }
 
-        protected Dictionary<uint, RecordEntry> RecordIndex
-        {
-            get
-            {
-                return _recordIndex ??= new Dictionary<uint, RecordEntry>();
-            }
-        }
+        protected Dictionary<uint, RecordEntry> RecordIndex =>
+            _recordIndex ??= new Dictionary<uint, RecordEntry>();
 
         protected bool TryGetRecordValue<T>(uint entryType, out T? value)
         {
             value = default;
 
-            // 1) Zuerst: Message-EntryValue-API (MAPI-Properties)
+            // 1) Try message-level MAPI property
             if (typeof(T) == typeof(string))
             {
-                if (Native.MessageGetEntryValueUtf8StringSize(RawHandle, entryType, out nuint size, nint.Zero) == 1 &&
+                IntPtr error = IntPtr.Zero;
+
+                if (Native.MessageGetEntryValueUtf8StringSize(RawHandle, entryType, out nuint size, out error) == 1 &&
                     size > 0)
                 {
                     var buf = new byte[(int)size];
-                    if (Native.MessageGetEntryValueUtf8String(RawHandle, entryType, buf, size, nint.Zero) == 1)
+
+                    int rc = Native.MessageGetEntryValueUtf8String(RawHandle, entryType, buf, size, out error);
+
+                    if (rc == 1)
                     {
                         int valid = buf.Length;
                         if (valid > 0 && buf[valid - 1] == 0)
                             valid--;
 
-                        string s = Encoding.UTF8.GetString(buf, 0, valid);
-                        value = (T)(object)s;
+                        value = (T)(object)Encoding.UTF8.GetString(buf, 0, valid);
                         return true;
                     }
+
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                 }
             }
 
-            // 2) Cache prüfen
+            // 2) Cached record entry
             if (_recordIndex != null && _recordIndex.TryGetValue(entryType, out var cached))
                 return TryConvertRecordEntry(cached, out value);
 
-            // 3) RecordSets durchsuchen (interne Properties)
+            // 3) Search record sets
             foreach (var rs in RecordSets)
             {
+                IntPtr error = IntPtr.Zero;
+
                 int rc = Native.RecordSetGetEntryByType(
                     rs.RawHandle,
                     entryType,
                     0,
-                    out var entryHandle,
+                    out nint entryHandle,
                     0,
-                    nint.Zero
+                    out error
                 );
 
-                if (rc == 1 && entryHandle != nint.Zero)
+                if (rc == 1 && entryHandle != IntPtr.Zero)
                 {
                     var entry = new RecordEntry(entryHandle, Native, ownsHandle: true);
 
@@ -156,6 +225,9 @@ namespace LibPff.Model
 
                     return TryConvertRecordEntry(entry, out value);
                 }
+
+                if (error != IntPtr.Zero)
+                    Native.ErrorFree(out error);
             }
 
             return false;
@@ -192,8 +264,23 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.ItemGetNumberOfEntries(RawHandle, out uint count, nint.Zero);
-                if (rc != 1) throw new PffException($"ItemGetNumberOfEntries failed: {rc}", rc);
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.ItemGetNumberOfEntries(RawHandle, out uint count, out error);
+
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.ItemGetNumberOfEntries),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 return count;
             }
         }
@@ -202,8 +289,23 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.ItemGetNumberOfSubItems(RawHandle, out int count, nint.Zero);
-                if (rc != 1) throw new PffException($"ItemGetNumberOfSubItems failed: {rc}", rc);
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.ItemGetNumberOfSubItems(RawHandle, out int count, out error);
+
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.ItemGetNumberOfSubItems),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 return count;
             }
         }
@@ -213,19 +315,34 @@ namespace LibPff.Model
             get
             {
                 var list = new List<Item>();
-                var count = SubItemsCount;
-                for (var i = 0; i < count; i++)
-                {
+                int count = SubItemsCount;
+
+                for (int i = 0; i < count; i++)
                     list.Add(GetSubItem(i)!);
-                }
+
                 return list;
             }
         }
 
         protected Item? GetSubItem(int index)
         {
-            int rc = Native.ItemGetSubItemByIdentifier(RawHandle, (uint)index, out nint itemHandle, nint.Zero);
-            if (rc != 1 || itemHandle == nint.Zero) throw new PffException($"ItemGetSubItem failed: {rc}", rc);
+            IntPtr error = IntPtr.Zero;
+
+            int rc = Native.ItemGetSubItemByIdentifier(RawHandle, (uint)index, out nint itemHandle, out error);
+
+            ReturnCode.Check(
+                rc,
+                error,
+                nameof(Native.ItemGetSubItemByIdentifier),
+                ptr =>
+                {
+                    var sb = new StringBuilder(4096);
+                    Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                    return sb.ToString();
+                },
+                ptr => Native.ErrorFree(out ptr)
+            );
+
             return new Item(itemHandle, Native, true);
         }
     }

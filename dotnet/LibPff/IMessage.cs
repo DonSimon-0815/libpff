@@ -32,6 +32,11 @@
         string? BodyText { get; }
 
         /// <summary>
+        /// Gets the MIME body
+        /// </summary>
+        public string? MimeBody { get; }
+
+        /// <summary>
         /// Asynchronously retrieve the plain text body. Implementations may load lazily.
         /// </summary>
         Task<string?> GetBodyPlainTextAsync();

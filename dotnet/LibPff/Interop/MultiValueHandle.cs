@@ -1,12 +1,13 @@
 // AUTOMATICALLY GENERATED. DO NOT MODIFY.
 
 using System.Runtime.InteropServices;
+using LibPff.Utility;
 
 namespace LibPff.Interop
 {
     internal sealed class MultiValueHandle : SafeHandle
     {
-        private INativeAdapter _native;
+        private readonly INativeAdapter _native;
 
         public MultiValueHandle(nint handle, INativeAdapter native, bool ownsHandle)
             : base(nint.Zero, ownsHandle)
@@ -19,9 +20,26 @@ namespace LibPff.Interop
 
         protected override bool ReleaseHandle()
         {
+			IntPtr error = IntPtr.Zero;
             nint tmp = handle;
-            int rc = _native.MultiValueFree(out tmp, nint.Zero);
+
+            int rc = _native.MultiValueFree(out tmp, out error);
+
             handle = nint.Zero;
+
+            ReturnCode.Check(
+                rc,
+                error,
+                "MultiValueFree(out tmp, out error)",
+                ptr =>
+                {
+                    var sb = new System.Text.StringBuilder(512);
+                    _native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                    return sb.ToString();
+                },
+                ptr => _native.ErrorFree(out ptr)
+            );
+
             return rc == 1;
         }
     }

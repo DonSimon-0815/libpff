@@ -19,13 +19,14 @@ FUNC_REGEX = re.compile(
 # Regex for normalization
 NORMALIZE_WHITESPACE = re.compile(r'\s+')
 
+
 CS_KEYWORDS = {
     "string", "int", "long", "uint", "byte", "sbyte", "short", "ushort",
     "char", "object", "decimal", "double", "float", "bool", "nint", "nuint",
     "void"
 }
 
-# Type-Mapping-Dictionaries
+# Type mapping dictionaries
 TYPE_MAPPINGS = {
     "out_parameters": {
         ("int", 1): "out int",
@@ -37,7 +38,7 @@ TYPE_MAPPINGS = {
         ("uint8_t", 1): "out byte",
         ("uint16_t", 1): "out ushort",
         ("uint64_t", 1): "out ulong",
-        ("double", 1): "out double",  # critical: double Out-Parameter
+        ("double", 1): "out double",
     },
     "buffers": {
         ("uint8_t", "buffer"): "byte[]",
@@ -115,34 +116,42 @@ class CParameter:
 
     @property
     def cs_type(self) -> str:
+        """
+        Base C → C# mapping without libpff-specific direction heuristics.
+        Direction (in/out) is derived purely from pointer level and type.
+        """
         bt = self.base_type
         lvl = self.pointer_level
         pname = self.name.lower()
 
-        # Fehler-Parameter - IntPtr für error-Pointer
-        if "libcerror_error_t" in self.c_type and "error" in pname:
+        # libcerror_error_t** should always be out IntPtr
+        if "libcerror_error_t" in self.c_type and lvl >= 2:
+            return "out IntPtr"
+
+        # libcerror_error_t* (if it ever appears) is treated as IntPtr
+        if "libcerror_error_t" in self.c_type and lvl == 1:
             return "IntPtr"
 
         # Output buffers for sprint functions
         if bt == "char" and pname in ("string", "string_2", "buffer"):
             return "StringBuilder"
 
-        # Byte-Buffer
+        # Byte buffers
         if bt == "uint8_t" and lvl == 1 and pname in (
-            "buffer", "string", "data", "utf8_string", "binary_data", 
+            "buffer", "string", "data", "utf8_string", "binary_data",
             "value_data", "guid", "utf8_entry_name", "utf8_sub_folder_name",
             "utf8_sub_message_name", "message_body", "gui_data"
         ):
             return "byte[]"
-        
-        # UTF-16 Buffer as ushort[]
+
+        # UTF-16 buffers as ushort[]
         if bt == "uint16_t" and lvl == 1 and pname in (
-            "utf16_string", "utf16_entry_name", "utf16_sub_folder_name", 
+            "utf16_string", "utf16_entry_name", "utf16_sub_folder_name",
             "utf16_sub_message_name"
         ):
             return "ushort[]"
 
-        # output parameters must me checked before pointers
+        # Out parameters (scalar pointers)
         key = (bt, lvl)
         if key in TYPE_MAPPINGS["out_parameters"]:
             return TYPE_MAPPINGS["out_parameters"][key]
@@ -155,27 +164,27 @@ class CParameter:
         if (bt, lvl) in TYPE_MAPPINGS["scalars"]:
             return TYPE_MAPPINGS["scalars"][(bt, lvl)]
 
-        # Pointers (Handles,...)
+        # Generic pointers (handles, opaque types, etc.)
         if lvl >= 2:
+            # For libpff, double pointers are always "out IntPtr"
             return "out IntPtr"
         if lvl == 1:
+            # Single pointer is an input handle
             return "IntPtr"
 
+        # Fallback
         return "IntPtr"
 
     @property
     def cs_signature(self) -> str:
-        """Full parameter for function signature (with 'out' keyword)."""
         return f"{self.cs_type} {self.name}"
 
     @property
     def cs_call_arg(self) -> str:
-        """Parameter for function call (includes 'out' keyword if needed)."""
         cs_type = self.cs_type
         if cs_type.startswith("out "):
             return f"out {self.name}"
-        else:
-            return self.name
+        return self.name
 
 
 class CFunctionSignature:
@@ -201,8 +210,12 @@ jinja_env = Environment(
     lstrip_blocks=True,
 )
 
+
 def _parse_parameters(param_str: str) -> List[CParameter]:
-    """Parse C function parameters into CParameter objects."""
+    """
+    Parse C function parameters into CParameter objects.
+    Handles pointer stars attached to the parameter name token.
+    """
     if not param_str or param_str.strip() == "void":
         return []
 
@@ -217,7 +230,7 @@ def _parse_parameters(param_str: str) -> List[CParameter]:
         param_name_token = tokens[-1]
         type_tokens = tokens[:-1]
 
-        # extract Pointer-characters
+        # Extract pointer characters from the parameter name token
         stars = ""
         while param_name_token.startswith("*"):
             stars += "*"
@@ -231,7 +244,9 @@ def _parse_parameters(param_str: str) -> List[CParameter]:
 
 
 def extract_functions(header_dir: str) -> List[CFunctionSignature]:
-    """Extract function signatures from header files."""
+    """
+    Extract function signatures from all .h files in the given directory.
+    """
     functions: List[CFunctionSignature] = []
     header_path = Path(header_dir)
 
@@ -253,32 +268,35 @@ def extract_functions(header_dir: str) -> List[CFunctionSignature]:
 
 
 def map_return_type(ret: str) -> str:
-    """Map C return type to C# return type."""
+    """
+    Map C return type to C# return type.
+    """
     r = ret.replace("\n", " ").strip().replace("const ", "").strip()
     return RETURN_TYPE_MAPPING.get(r, "int")
 
 
-def get_classname(classname: str, platform: dict[str, any]):
-    os = platform["os"][0].upper() + platform["os"][1:].lower()
-    return f"{classname}{os}{platform["bits"]}"
+def get_classname(classname: str, platform: dict[str, any]) -> str:
+    """
+    Build a platform-specific class name, e.g. NativeWin64.
+    """
+    os_name = platform["os"][0].upper() + platform["os"][1:].lower()
+    return f"{classname}{os_name}{platform['bits']}"
 
 
 def c_to_cs_name(c_name: str) -> str:
-    """Convert C function name to C# PascalCase without the 'libpff_' prefix."""
+    """
+    Convert C function name to C# PascalCase without the 'libpff_' prefix.
+    """
     s = c_name
-    # remove libpff_ prefix if present
     if s.startswith("libpff_"):
         s = s[len("libpff_"):]
-    # split on underscores and capitalize each segment
     parts = [p for p in s.split("_") if p]
     if not parts:
         cs = c_name
     else:
         cs = "".join(part.capitalize() for part in parts)
-    # ensure it doesn't start with a digit
     if cs and cs[0].isdigit():
         cs = "_" + cs
-    # avoid simple keyword collision (CS_KEYWORDS contains lowercase tokens)
     if cs.lower() in CS_KEYWORDS:
         cs = cs + "_"
     return cs
@@ -286,10 +304,12 @@ def c_to_cs_name(c_name: str) -> str:
 
 def write_c_signatures(
     output_dir: Path,
-    functions: list[CFunctionSignature],
+    functions: List[CFunctionSignature],
     file_name: Path
 ) -> None:
-
+    """
+    Write a plain C signature list for inspection/debugging.
+    """
     template = jinja_env.get_template("c_signatures.txt.j2")
 
     fn_models = []
@@ -311,9 +331,11 @@ def write_adapter_factory(
     namespace: str,
     classname: str,
     adapter_classname: str,
-    platforms: list[dict[str, any]]
+    platforms: List[dict]
 ) -> None:
-
+    """
+    Generate a factory that selects the correct platform-specific adapter at runtime.
+    """
     template = jinja_env.get_template("adapter_factory.cs.j2")
 
     runtime_information = {
@@ -328,7 +350,6 @@ def write_adapter_factory(
         64: "Environment.Is64BitOperatingSystem",
     }
 
-    # enrich platform entries with computed classnames
     enriched = []
     for p in platforms:
         enriched.append({
@@ -352,9 +373,11 @@ def write_adapter_interface(
     output_dir: Path,
     namespace: str,
     classname: str,
-    functions: list[CFunctionSignature]
+    functions: List[CFunctionSignature]
 ) -> None:
-
+    """
+    Generate the managed interface (INativeAdapter) that mirrors the C API.
+    """
     template = jinja_env.get_template("adapter_interface.cs.j2")
 
     fn_models = []
@@ -380,9 +403,11 @@ def write_native_class(
     namespace: str,
     classname: str,
     platform: dict[str, any],
-    functions: list[CFunctionSignature]
+    functions: List[CFunctionSignature]
 ) -> None:
-
+    """
+    Generate the platform-specific P/Invoke class with DllImport signatures.
+    """
     template = jinja_env.get_template("native_class.cs.j2")
 
     classname = get_classname(classname, platform)
@@ -390,7 +415,7 @@ def write_native_class(
 
     fn_models = []
     for fn in functions:
-        # Determine return type (special handling for ssize_t/off64_t/size64_t)
+        # Special handling for ssize_t/off64_t/size64_t depending on platform bits
         if fn.return_type in ("ssize_t", "off64_t", "size64_t"):
             if platform["bits"] == 32:
                 return_type = "int"
@@ -411,6 +436,8 @@ def write_native_class(
         classname=classname,
         dll_name=dll_name,
         functions=fn_models,
+        # This is used in the template, e.g. [DllImport(..., {{ charset }})]
+        charset="CharSet = CharSet.Unicode",
     )
 
     output_file = output_dir / f"{classname}.cs"
@@ -423,16 +450,16 @@ def write_adapter_class(
     classname: str,
     native_classname: str,
     platform: dict[str, any],
-    functions: list[CFunctionSignature]
+    functions: List[CFunctionSignature]
 ) -> None:
-    
+    """
+    Generate the managed adapter class that calls the native P/Invoke class.
+    """
     template = jinja_env.get_template("adapter_class.cs.j2")
 
-    # Resolve platform-specific classnames
     classname = get_classname(classname, platform)
     native_classname = get_classname(native_classname, platform)
 
-    # Prepare function metadata for the template
     fn_models = []
     for fn in functions:
         fn_models.append({
@@ -455,19 +482,24 @@ def write_adapter_class(
     output_file.write_text(output, encoding="utf-8")
 
 
-
-
-def write_safe_handle(output_dir: Path, namespace: str, classname: str, function: CFunctionSignature) -> None:
-
+def write_safe_handle(
+    output_dir: Path,
+    namespace: str,
+    classname: str,
+    function: CFunctionSignature
+) -> None:
+    """
+    Generate a SafeHandle wrapper for cleanup functions (xxx_free).
+    """
     template = jinja_env.get_template("safe_handle.cs.j2")
 
     adapter_cleanup_function = c_to_cs_name(function.name)
 
-    # determine adapter call
+    # Very simple heuristic: 1- or 2-parameter free functions
     if len(function.params) == 1:
         adapter_call = f"{adapter_cleanup_function}(out handle)"
     elif len(function.params) == 2:
-        adapter_call = f"{adapter_cleanup_function}(out tmp, nint.Zero)"
+        adapter_call = f"{adapter_cleanup_function}(out tmp, out error)"
     else:
         raise ArgumentError("SafeHandle generator failed")
 
@@ -483,38 +515,43 @@ def write_safe_handle(output_dir: Path, namespace: str, classname: str, function
 
 
 def main() -> None:
-    """Main entry point."""
+    """
+    Main entry point: parse headers and generate all interop artifacts.
+    """
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
-    # Extract functions
     functions = extract_functions(HEADER_DIR)
-    
+
     if not functions:
         print("Warning: No functions found.")
         return
 
-    # Generate output files
     platforms = [
-        { "os": "win", "bits": 32},
-        { "os": "win", "bits": 64},
+        {"os": "win", "bits": 32},
+        {"os": "win", "bits": 64},
     ]
 
+    # Raw C signatures for inspection
     write_c_signatures(Path(OUTPUT_DIR), functions, "libpff-capi.txt")
+
+    # Managed interface
     write_adapter_interface(Path(OUTPUT_DIR), NAMESPACE, "INativeAdapter", functions)
 
+    # Platform-specific native classes and adapters
     for platform in platforms:
         write_native_class(Path(OUTPUT_DIR), NAMESPACE, "Native", platform, functions)
         write_adapter_class(Path(OUTPUT_DIR), NAMESPACE, "NativeAdapter", "Native", platform, functions)
 
+    # Factory that selects the correct adapter at runtime
     write_adapter_factory(Path(OUTPUT_DIR), NAMESPACE, "NativeAdapterFactory", "NativeAdapter", platforms)
 
-    # create save handles for cleanup native pointers
+    # Generate SafeHandle wrappers for cleanup functions (xxx_free)
     cleanup_functions = [obj for obj in functions if obj.name.lower().endswith("free")]
     for function in cleanup_functions:
         classname = c_to_cs_name(function.name)
         classname = re.sub("Free$", "Handle", classname)
         write_safe_handle(Path(OUTPUT_DIR), NAMESPACE, classname, function)
-    
+
     print(f"Extracted {len(functions)} functions.")
     print(f"Output files written to '{OUTPUT_DIR}'")
 

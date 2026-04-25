@@ -8,31 +8,31 @@ namespace LibPff.Interop
 {
     internal sealed class NativeAdapterWin32 : INativeAdapter
     {
-        public int AttachmentGetType(IntPtr attachment, out int attachment_type, IntPtr error)
+        public int AttachmentGetType(IntPtr attachment, out int attachment_type, out IntPtr error)
         {
-            return NativeWin32.AttachmentGetType(attachment, out attachment_type, error);
+            return NativeWin32.AttachmentGetType(attachment, out attachment_type, out error);
         }
-        public int AttachmentGetDataSize(IntPtr attachment, out long size, IntPtr error)
+        public int AttachmentGetDataSize(IntPtr attachment, out long size, out IntPtr error)
         {
-            return NativeWin32.AttachmentGetDataSize(attachment, out size, error);
+            return NativeWin32.AttachmentGetDataSize(attachment, out size, out error);
         }
-        public long AttachmentDataReadBuffer(IntPtr attachment, byte[] buffer, UIntPtr buffer_size, IntPtr error)
+        public long AttachmentDataReadBuffer(IntPtr attachment, byte[] buffer, UIntPtr buffer_size, out IntPtr error)
         {
-            int native_result = NativeWin32.AttachmentDataReadBuffer(attachment, buffer, buffer_size, error);
+            int native_result = NativeWin32.AttachmentDataReadBuffer(attachment, buffer, buffer_size, out error);
             return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
-        public long AttachmentDataSeekOffset(IntPtr attachment, long offset, int whence, IntPtr error)
+        public long AttachmentDataSeekOffset(IntPtr attachment, long offset, int whence, out IntPtr error)
         {
-            int native_result = NativeWin32.AttachmentDataSeekOffset(attachment, offset, whence, error);
+            int native_result = NativeWin32.AttachmentDataSeekOffset(attachment, offset, whence, out error);
             return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
-        public int AttachmentGetDataFileIoHandle(IntPtr attachment, out IntPtr file_io_handle, IntPtr error)
+        public int AttachmentGetDataFileIoHandle(IntPtr attachment, out IntPtr file_io_handle, out IntPtr error)
         {
-            return NativeWin32.AttachmentGetDataFileIoHandle(attachment, out file_io_handle, error);
+            return NativeWin32.AttachmentGetDataFileIoHandle(attachment, out file_io_handle, out error);
         }
-        public int AttachmentGetItem(IntPtr attachment, out IntPtr attached_item, IntPtr error)
+        public int AttachmentGetItem(IntPtr attachment, out IntPtr attached_item, out IntPtr error)
         {
-            return NativeWin32.AttachmentGetItem(attachment, out attached_item, error);
+            return NativeWin32.AttachmentGetItem(attachment, out attached_item, out error);
         }
         public void ErrorFree(out IntPtr error)
         {
@@ -54,779 +54,779 @@ namespace LibPff.Interop
         {
             return NativeWin32.ErrorBacktraceSprint(error, string_2, size);
         }
-        public int FileInitialize(out IntPtr file, IntPtr error)
+        public int FileInitialize(out IntPtr file, out IntPtr error)
         {
-            return NativeWin32.FileInitialize(out file, error);
+            return NativeWin32.FileInitialize(out file, out error);
         }
-        public int FileFree(out IntPtr file, IntPtr error)
+        public int FileFree(out IntPtr file, out IntPtr error)
         {
-            return NativeWin32.FileFree(out file, error);
+            return NativeWin32.FileFree(out file, out error);
         }
-        public int FileSignalAbort(IntPtr file, IntPtr error)
+        public int FileSignalAbort(IntPtr file, out IntPtr error)
         {
-            return NativeWin32.FileSignalAbort(file, error);
+            return NativeWin32.FileSignalAbort(file, out error);
         }
-        public int FileOpen(IntPtr file, [MarshalAs(UnmanagedType.LPStr)] string filename, int access_flags, IntPtr error)
+        public int FileOpen(IntPtr file, [MarshalAs(UnmanagedType.LPStr)] string filename, int access_flags, out IntPtr error)
         {
-            return NativeWin32.FileOpen(file, filename, access_flags, error);
+            return NativeWin32.FileOpen(file, filename, access_flags, out error);
         }
-        public int FileOpenWide(IntPtr file, [MarshalAs(UnmanagedType.LPWStr)] string filename, int access_flags, IntPtr error)
+        public int FileOpenWide(IntPtr file, [MarshalAs(UnmanagedType.LPWStr)] string filename, int access_flags, out IntPtr error)
         {
-            return NativeWin32.FileOpenWide(file, filename, access_flags, error);
+            return NativeWin32.FileOpenWide(file, filename, access_flags, out error);
         }
-        public int FileOpenFileIoHandle(IntPtr file, IntPtr file_io_handle, int access_flags, IntPtr error)
+        public int FileOpenFileIoHandle(IntPtr file, IntPtr file_io_handle, int access_flags, out IntPtr error)
         {
-            return NativeWin32.FileOpenFileIoHandle(file, file_io_handle, access_flags, error);
+            return NativeWin32.FileOpenFileIoHandle(file, file_io_handle, access_flags, out error);
         }
-        public int FileClose(IntPtr file, IntPtr error)
+        public int FileClose(IntPtr file, out IntPtr error)
         {
-            return NativeWin32.FileClose(file, error);
+            return NativeWin32.FileClose(file, out error);
         }
-        public int FileIsCorrupted(IntPtr file, IntPtr error)
+        public int FileIsCorrupted(IntPtr file, out IntPtr error)
         {
-            return NativeWin32.FileIsCorrupted(file, error);
+            return NativeWin32.FileIsCorrupted(file, out error);
         }
-        public int FileRecoverItems(IntPtr file, byte recovery_flags, IntPtr error)
+        public int FileRecoverItems(IntPtr file, byte recovery_flags, out IntPtr error)
         {
-            return NativeWin32.FileRecoverItems(file, recovery_flags, error);
+            return NativeWin32.FileRecoverItems(file, recovery_flags, out error);
         }
-        public int FileGetSize(IntPtr file, out long size, IntPtr error)
+        public int FileGetSize(IntPtr file, out long size, out IntPtr error)
         {
-            return NativeWin32.FileGetSize(file, out size, error);
+            return NativeWin32.FileGetSize(file, out size, out error);
         }
-        public int FileGetContentType(IntPtr file, out byte content_type, IntPtr error)
+        public int FileGetContentType(IntPtr file, out byte content_type, out IntPtr error)
         {
-            return NativeWin32.FileGetContentType(file, out content_type, error);
+            return NativeWin32.FileGetContentType(file, out content_type, out error);
         }
-        public int FileGetType(IntPtr file, out byte type, IntPtr error)
+        public int FileGetType(IntPtr file, out byte type, out IntPtr error)
         {
-            return NativeWin32.FileGetType(file, out type, error);
+            return NativeWin32.FileGetType(file, out type, out error);
         }
-        public int FileGetEncryptionType(IntPtr file, out byte encryption_type, IntPtr error)
+        public int FileGetEncryptionType(IntPtr file, out byte encryption_type, out IntPtr error)
         {
-            return NativeWin32.FileGetEncryptionType(file, out encryption_type, error);
+            return NativeWin32.FileGetEncryptionType(file, out encryption_type, out error);
         }
-        public int FileGetAsciiCodepage(IntPtr file, out int ascii_codepage, IntPtr error)
+        public int FileGetAsciiCodepage(IntPtr file, out int ascii_codepage, out IntPtr error)
         {
-            return NativeWin32.FileGetAsciiCodepage(file, out ascii_codepage, error);
+            return NativeWin32.FileGetAsciiCodepage(file, out ascii_codepage, out error);
         }
-        public int FileSetAsciiCodepage(IntPtr file, int ascii_codepage, IntPtr error)
+        public int FileSetAsciiCodepage(IntPtr file, int ascii_codepage, out IntPtr error)
         {
-            return NativeWin32.FileSetAsciiCodepage(file, ascii_codepage, error);
+            return NativeWin32.FileSetAsciiCodepage(file, ascii_codepage, out error);
         }
-        public int FileGetNumberOfUnallocatedBlocks(IntPtr file, int unallocated_block_type, out int number_of_unallocated_blocks, IntPtr error)
+        public int FileGetNumberOfUnallocatedBlocks(IntPtr file, int unallocated_block_type, out int number_of_unallocated_blocks, out IntPtr error)
         {
-            return NativeWin32.FileGetNumberOfUnallocatedBlocks(file, unallocated_block_type, out number_of_unallocated_blocks, error);
+            return NativeWin32.FileGetNumberOfUnallocatedBlocks(file, unallocated_block_type, out number_of_unallocated_blocks, out error);
         }
-        public int FileGetUnallocatedBlock(IntPtr file, int unallocated_block_type, int unallocated_block_index, out long offset, out long size, IntPtr error)
+        public int FileGetUnallocatedBlock(IntPtr file, int unallocated_block_type, int unallocated_block_index, out long offset, out long size, out IntPtr error)
         {
-            return NativeWin32.FileGetUnallocatedBlock(file, unallocated_block_type, unallocated_block_index, out offset, out size, error);
+            return NativeWin32.FileGetUnallocatedBlock(file, unallocated_block_type, unallocated_block_index, out offset, out size, out error);
         }
-        public int FileGetRootItem(IntPtr file, out IntPtr root_item, IntPtr error)
+        public int FileGetRootItem(IntPtr file, out IntPtr root_item, out IntPtr error)
         {
-            return NativeWin32.FileGetRootItem(file, out root_item, error);
+            return NativeWin32.FileGetRootItem(file, out root_item, out error);
         }
-        public int FileGetMessageStore(IntPtr file, out IntPtr message_store, IntPtr error)
+        public int FileGetMessageStore(IntPtr file, out IntPtr message_store, out IntPtr error)
         {
-            return NativeWin32.FileGetMessageStore(file, out message_store, error);
+            return NativeWin32.FileGetMessageStore(file, out message_store, out error);
         }
-        public int FileGetNameToIdMap(IntPtr file, out IntPtr name_to_id_map, IntPtr error)
+        public int FileGetNameToIdMap(IntPtr file, out IntPtr name_to_id_map, out IntPtr error)
         {
-            return NativeWin32.FileGetNameToIdMap(file, out name_to_id_map, error);
+            return NativeWin32.FileGetNameToIdMap(file, out name_to_id_map, out error);
         }
-        public int FileGetRootFolder(IntPtr file, out IntPtr root_folder, IntPtr error)
+        public int FileGetRootFolder(IntPtr file, out IntPtr root_folder, out IntPtr error)
         {
-            return NativeWin32.FileGetRootFolder(file, out root_folder, error);
+            return NativeWin32.FileGetRootFolder(file, out root_folder, out error);
         }
-        public int FileGetItemByIdentifier(IntPtr file, uint item_identifier, out IntPtr item, IntPtr error)
+        public int FileGetItemByIdentifier(IntPtr file, uint item_identifier, out IntPtr item, out IntPtr error)
         {
-            return NativeWin32.FileGetItemByIdentifier(file, item_identifier, out item, error);
+            return NativeWin32.FileGetItemByIdentifier(file, item_identifier, out item, out error);
         }
-        public int FileGetNumberOfOrphanItems(IntPtr file, out int number_of_orphan_items, IntPtr error)
+        public int FileGetNumberOfOrphanItems(IntPtr file, out int number_of_orphan_items, out IntPtr error)
         {
-            return NativeWin32.FileGetNumberOfOrphanItems(file, out number_of_orphan_items, error);
+            return NativeWin32.FileGetNumberOfOrphanItems(file, out number_of_orphan_items, out error);
         }
-        public int FileGetOrphanItemByIndex(IntPtr file, int orphan_item_index, out IntPtr orphan_item, IntPtr error)
+        public int FileGetOrphanItemByIndex(IntPtr file, int orphan_item_index, out IntPtr orphan_item, out IntPtr error)
         {
-            return NativeWin32.FileGetOrphanItemByIndex(file, orphan_item_index, out orphan_item, error);
+            return NativeWin32.FileGetOrphanItemByIndex(file, orphan_item_index, out orphan_item, out error);
         }
-        public int FileGetNumberOfRecoveredItems(IntPtr file, out int number_of_recovered_items, IntPtr error)
+        public int FileGetNumberOfRecoveredItems(IntPtr file, out int number_of_recovered_items, out IntPtr error)
         {
-            return NativeWin32.FileGetNumberOfRecoveredItems(file, out number_of_recovered_items, error);
+            return NativeWin32.FileGetNumberOfRecoveredItems(file, out number_of_recovered_items, out error);
         }
-        public int FileGetRecoveredItemByIndex(IntPtr file, int recovered_item_index, out IntPtr recovered_item, IntPtr error)
+        public int FileGetRecoveredItemByIndex(IntPtr file, int recovered_item_index, out IntPtr recovered_item, out IntPtr error)
         {
-            return NativeWin32.FileGetRecoveredItemByIndex(file, recovered_item_index, out recovered_item, error);
+            return NativeWin32.FileGetRecoveredItemByIndex(file, recovered_item_index, out recovered_item, out error);
         }
-        public int FolderGetType(IntPtr folder, out byte type, IntPtr error)
+        public int FolderGetType(IntPtr folder, out byte type, out IntPtr error)
         {
-            return NativeWin32.FolderGetType(folder, out type, error);
+            return NativeWin32.FolderGetType(folder, out type, out error);
         }
-        public int FolderGetUtf8NameSize(IntPtr folder, out UIntPtr utf8_string_size, IntPtr error)
+        public int FolderGetUtf8NameSize(IntPtr folder, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.FolderGetUtf8NameSize(folder, out utf8_string_size, error);
+            return NativeWin32.FolderGetUtf8NameSize(folder, out utf8_string_size, out error);
         }
-        public int FolderGetUtf8Name(IntPtr folder, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int FolderGetUtf8Name(IntPtr folder, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.FolderGetUtf8Name(folder, utf8_string, utf8_string_size, error);
+            return NativeWin32.FolderGetUtf8Name(folder, utf8_string, utf8_string_size, out error);
         }
-        public int FolderGetUtf16NameSize(IntPtr folder, out UIntPtr utf16_string_size, IntPtr error)
+        public int FolderGetUtf16NameSize(IntPtr folder, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.FolderGetUtf16NameSize(folder, out utf16_string_size, error);
+            return NativeWin32.FolderGetUtf16NameSize(folder, out utf16_string_size, out error);
         }
-        public int FolderGetUtf16Name(IntPtr folder, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int FolderGetUtf16Name(IntPtr folder, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.FolderGetUtf16Name(folder, utf16_string, utf16_string_size, error);
+            return NativeWin32.FolderGetUtf16Name(folder, utf16_string, utf16_string_size, out error);
         }
-        public int FolderGetNumberOfSubFolders(IntPtr folder, out int number_of_sub_folders, IntPtr error)
+        public int FolderGetNumberOfSubFolders(IntPtr folder, out int number_of_sub_folders, out IntPtr error)
         {
-            return NativeWin32.FolderGetNumberOfSubFolders(folder, out number_of_sub_folders, error);
+            return NativeWin32.FolderGetNumberOfSubFolders(folder, out number_of_sub_folders, out error);
         }
-        public int FolderGetSubFolder(IntPtr folder, int sub_folder_index, out IntPtr sub_folder, IntPtr error)
+        public int FolderGetSubFolder(IntPtr folder, int sub_folder_index, out IntPtr sub_folder, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubFolder(folder, sub_folder_index, out sub_folder, error);
+            return NativeWin32.FolderGetSubFolder(folder, sub_folder_index, out sub_folder, out error);
         }
-        public int FolderGetSubFolderByUtf8Name(IntPtr folder, byte[] utf8_sub_folder_name, UIntPtr utf8_sub_folder_name_size, out IntPtr sub_folder, IntPtr error)
+        public int FolderGetSubFolderByUtf8Name(IntPtr folder, byte[] utf8_sub_folder_name, UIntPtr utf8_sub_folder_name_size, out IntPtr sub_folder, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubFolderByUtf8Name(folder, utf8_sub_folder_name, utf8_sub_folder_name_size, out sub_folder, error);
+            return NativeWin32.FolderGetSubFolderByUtf8Name(folder, utf8_sub_folder_name, utf8_sub_folder_name_size, out sub_folder, out error);
         }
-        public int FolderGetSubFolderByUtf16Name(IntPtr folder, ushort[] utf16_sub_folder_name, UIntPtr utf16_sub_folder_name_size, out IntPtr sub_folder, IntPtr error)
+        public int FolderGetSubFolderByUtf16Name(IntPtr folder, ushort[] utf16_sub_folder_name, UIntPtr utf16_sub_folder_name_size, out IntPtr sub_folder, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubFolderByUtf16Name(folder, utf16_sub_folder_name, utf16_sub_folder_name_size, out sub_folder, error);
+            return NativeWin32.FolderGetSubFolderByUtf16Name(folder, utf16_sub_folder_name, utf16_sub_folder_name_size, out sub_folder, out error);
         }
-        public int FolderGetSubFolders(IntPtr item, out IntPtr sub_folders, IntPtr error)
+        public int FolderGetSubFolders(IntPtr item, out IntPtr sub_folders, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubFolders(item, out sub_folders, error);
+            return NativeWin32.FolderGetSubFolders(item, out sub_folders, out error);
         }
-        public int FolderGetNumberOfSubMessages(IntPtr folder, out int number_of_sub_messages, IntPtr error)
+        public int FolderGetNumberOfSubMessages(IntPtr folder, out int number_of_sub_messages, out IntPtr error)
         {
-            return NativeWin32.FolderGetNumberOfSubMessages(folder, out number_of_sub_messages, error);
+            return NativeWin32.FolderGetNumberOfSubMessages(folder, out number_of_sub_messages, out error);
         }
-        public int FolderGetSubMessage(IntPtr folder, int sub_message_index, out IntPtr sub_message, IntPtr error)
+        public int FolderGetSubMessage(IntPtr folder, int sub_message_index, out IntPtr sub_message, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubMessage(folder, sub_message_index, out sub_message, error);
+            return NativeWin32.FolderGetSubMessage(folder, sub_message_index, out sub_message, out error);
         }
-        public int FolderGetSubMessageByUtf8Name(IntPtr folder, byte[] utf8_sub_message_name, UIntPtr utf8_sub_message_name_size, out IntPtr sub_message, IntPtr error)
+        public int FolderGetSubMessageByUtf8Name(IntPtr folder, byte[] utf8_sub_message_name, UIntPtr utf8_sub_message_name_size, out IntPtr sub_message, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubMessageByUtf8Name(folder, utf8_sub_message_name, utf8_sub_message_name_size, out sub_message, error);
+            return NativeWin32.FolderGetSubMessageByUtf8Name(folder, utf8_sub_message_name, utf8_sub_message_name_size, out sub_message, out error);
         }
-        public int FolderGetSubMessageByUtf16Name(IntPtr folder, ushort[] utf16_sub_message_name, UIntPtr utf16_sub_message_name_size, out IntPtr sub_message, IntPtr error)
+        public int FolderGetSubMessageByUtf16Name(IntPtr folder, ushort[] utf16_sub_message_name, UIntPtr utf16_sub_message_name_size, out IntPtr sub_message, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubMessageByUtf16Name(folder, utf16_sub_message_name, utf16_sub_message_name_size, out sub_message, error);
+            return NativeWin32.FolderGetSubMessageByUtf16Name(folder, utf16_sub_message_name, utf16_sub_message_name_size, out sub_message, out error);
         }
-        public int FolderGetSubMessages(IntPtr item, out IntPtr sub_messages, IntPtr error)
+        public int FolderGetSubMessages(IntPtr item, out IntPtr sub_messages, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubMessages(item, out sub_messages, error);
+            return NativeWin32.FolderGetSubMessages(item, out sub_messages, out error);
         }
-        public int FolderGetNumberOfSubAssociatedContents(IntPtr folder, out int number_of_sub_associated_contents, IntPtr error)
+        public int FolderGetNumberOfSubAssociatedContents(IntPtr folder, out int number_of_sub_associated_contents, out IntPtr error)
         {
-            return NativeWin32.FolderGetNumberOfSubAssociatedContents(folder, out number_of_sub_associated_contents, error);
+            return NativeWin32.FolderGetNumberOfSubAssociatedContents(folder, out number_of_sub_associated_contents, out error);
         }
-        public int FolderGetSubAssociatedContent(IntPtr folder, int sub_associated_content_index, out IntPtr sub_associated_content, IntPtr error)
+        public int FolderGetSubAssociatedContent(IntPtr folder, int sub_associated_content_index, out IntPtr sub_associated_content, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubAssociatedContent(folder, sub_associated_content_index, out sub_associated_content, error);
+            return NativeWin32.FolderGetSubAssociatedContent(folder, sub_associated_content_index, out sub_associated_content, out error);
         }
-        public int FolderGetSubAssociatedContents(IntPtr item, out IntPtr sub_associated_contents, IntPtr error)
+        public int FolderGetSubAssociatedContents(IntPtr item, out IntPtr sub_associated_contents, out IntPtr error)
         {
-            return NativeWin32.FolderGetSubAssociatedContents(item, out sub_associated_contents, error);
+            return NativeWin32.FolderGetSubAssociatedContents(item, out sub_associated_contents, out error);
         }
-        public int FolderGetUnknowns(IntPtr folder, out IntPtr unknowns, IntPtr error)
+        public int FolderGetUnknowns(IntPtr folder, out IntPtr unknowns, out IntPtr error)
         {
-            return NativeWin32.FolderGetUnknowns(folder, out unknowns, error);
+            return NativeWin32.FolderGetUnknowns(folder, out unknowns, out error);
         }
-        public int ItemFree(out IntPtr item, IntPtr error)
+        public int ItemFree(out IntPtr item, out IntPtr error)
         {
-            return NativeWin32.ItemFree(out item, error);
+            return NativeWin32.ItemFree(out item, out error);
         }
-        public int ItemGetIdentifier(IntPtr item, out uint identifier, IntPtr error)
+        public int ItemGetIdentifier(IntPtr item, out uint identifier, out IntPtr error)
         {
-            return NativeWin32.ItemGetIdentifier(item, out identifier, error);
+            return NativeWin32.ItemGetIdentifier(item, out identifier, out error);
         }
-        public int ItemGetNumberOfRecordSets(IntPtr item, out int number_of_record_sets, IntPtr error)
+        public int ItemGetNumberOfRecordSets(IntPtr item, out int number_of_record_sets, out IntPtr error)
         {
-            return NativeWin32.ItemGetNumberOfRecordSets(item, out number_of_record_sets, error);
+            return NativeWin32.ItemGetNumberOfRecordSets(item, out number_of_record_sets, out error);
         }
-        public int ItemGetRecordSetByIndex(IntPtr item, int record_set_index, out IntPtr record_set, IntPtr error)
+        public int ItemGetRecordSetByIndex(IntPtr item, int record_set_index, out IntPtr record_set, out IntPtr error)
         {
-            return NativeWin32.ItemGetRecordSetByIndex(item, record_set_index, out record_set, error);
+            return NativeWin32.ItemGetRecordSetByIndex(item, record_set_index, out record_set, out error);
         }
-        public int ItemGetNumberOfEntries(IntPtr item, out uint number_of_entries, IntPtr error)
+        public int ItemGetNumberOfEntries(IntPtr item, out uint number_of_entries, out IntPtr error)
         {
-            return NativeWin32.ItemGetNumberOfEntries(item, out number_of_entries, error);
+            return NativeWin32.ItemGetNumberOfEntries(item, out number_of_entries, out error);
         }
-        public int ItemGetType(IntPtr item, out byte item_type, IntPtr error)
+        public int ItemGetType(IntPtr item, out byte item_type, out IntPtr error)
         {
-            return NativeWin32.ItemGetType(item, out item_type, error);
+            return NativeWin32.ItemGetType(item, out item_type, out error);
         }
-        public int ItemGetNumberOfSubItems(IntPtr item, out int number_of_sub_items, IntPtr error)
+        public int ItemGetNumberOfSubItems(IntPtr item, out int number_of_sub_items, out IntPtr error)
         {
-            return NativeWin32.ItemGetNumberOfSubItems(item, out number_of_sub_items, error);
+            return NativeWin32.ItemGetNumberOfSubItems(item, out number_of_sub_items, out error);
         }
-        public int ItemGetSubItem(IntPtr item, int sub_item_index, out IntPtr sub_item, IntPtr error)
+        public int ItemGetSubItem(IntPtr item, int sub_item_index, out IntPtr sub_item, out IntPtr error)
         {
-            return NativeWin32.ItemGetSubItem(item, sub_item_index, out sub_item, error);
+            return NativeWin32.ItemGetSubItem(item, sub_item_index, out sub_item, out error);
         }
-        public int ItemGetSubItemByIdentifier(IntPtr item, uint sub_item_identifier, out IntPtr sub_item, IntPtr error)
+        public int ItemGetSubItemByIdentifier(IntPtr item, uint sub_item_identifier, out IntPtr sub_item, out IntPtr error)
         {
-            return NativeWin32.ItemGetSubItemByIdentifier(item, sub_item_identifier, out sub_item, error);
+            return NativeWin32.ItemGetSubItemByIdentifier(item, sub_item_identifier, out sub_item, out error);
         }
-        public int FileGetOrphanItem(IntPtr file, int orphan_item_index, out IntPtr orphan_item, IntPtr error)
+        public int FileGetOrphanItem(IntPtr file, int orphan_item_index, out IntPtr orphan_item, out IntPtr error)
         {
-            return NativeWin32.FileGetOrphanItem(file, orphan_item_index, out orphan_item, error);
+            return NativeWin32.FileGetOrphanItem(file, orphan_item_index, out orphan_item, out error);
         }
-        public int FileGetRecoveredItem(IntPtr file, int recovered_item_index, out IntPtr recovered_item, IntPtr error)
+        public int FileGetRecoveredItem(IntPtr file, int recovered_item_index, out IntPtr recovered_item, out IntPtr error)
         {
-            return NativeWin32.FileGetRecoveredItem(file, recovered_item_index, out recovered_item, error);
+            return NativeWin32.FileGetRecoveredItem(file, recovered_item_index, out recovered_item, out error);
         }
-        public int ItemClone(out IntPtr destination_item, IntPtr source_item, IntPtr error)
+        public int ItemClone(out IntPtr destination_item, IntPtr source_item, out IntPtr error)
         {
-            return NativeWin32.ItemClone(out destination_item, source_item, error);
+            return NativeWin32.ItemClone(out destination_item, source_item, out error);
         }
-        public int ItemGetNumberOfSets(IntPtr item, out uint number_of_sets, IntPtr error)
+        public int ItemGetNumberOfSets(IntPtr item, out uint number_of_sets, out IntPtr error)
         {
-            return NativeWin32.ItemGetNumberOfSets(item, out number_of_sets, error);
+            return NativeWin32.ItemGetNumberOfSets(item, out number_of_sets, out error);
         }
-        public int ItemGetEntryType(IntPtr item, int set_index, int entry_index, out uint entry_type, out uint value_type, out IntPtr name_to_id_map_entry, IntPtr error)
+        public int ItemGetEntryType(IntPtr item, int set_index, int entry_index, out uint entry_type, out uint value_type, out IntPtr name_to_id_map_entry, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryType(item, set_index, entry_index, out entry_type, out value_type, out name_to_id_map_entry, error);
+            return NativeWin32.ItemGetEntryType(item, set_index, entry_index, out entry_type, out value_type, out name_to_id_map_entry, out error);
         }
-        public int ItemGetValueType(IntPtr item, int set_index, uint entry_type, out uint value_type, byte flags, IntPtr error)
+        public int ItemGetValueType(IntPtr item, int set_index, uint entry_type, out uint value_type, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetValueType(item, set_index, entry_type, out value_type, flags, error);
+            return NativeWin32.ItemGetValueType(item, set_index, entry_type, out value_type, flags, out error);
         }
-        public int ItemGetEntryValue(IntPtr item, int set_index, uint entry_type, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, byte flags, IntPtr error)
+        public int ItemGetEntryValue(IntPtr item, int set_index, uint entry_type, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue(item, set_index, entry_type, out value_type, out value_data, out value_data_size, flags, error);
+            return NativeWin32.ItemGetEntryValue(item, set_index, entry_type, out value_type, out value_data, out value_data_size, flags, out error);
         }
-        public int ItemGetEntryValueByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, IntPtr error)
+        public int ItemGetEntryValueByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out value_type, out value_data, out value_data_size, error);
+            return NativeWin32.ItemGetEntryValueByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out value_type, out value_data, out value_data_size, out error);
         }
-        public int ItemGetEntryValueByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, IntPtr error)
+        public int ItemGetEntryValueByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out value_type, out value_data, out value_data_size, error);
+            return NativeWin32.ItemGetEntryValueByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out value_type, out value_data, out value_data_size, out error);
         }
-        public int ItemGetEntryValueBoolean(IntPtr item, int set_index, uint entry_type, out byte entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValueBoolean(IntPtr item, int set_index, uint entry_type, out byte entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBoolean(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValueBoolean(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValueBooleanByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out byte entry_value, IntPtr error)
+        public int ItemGetEntryValueBooleanByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out byte entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBooleanByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueBooleanByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueBooleanByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out byte entry_value, IntPtr error)
+        public int ItemGetEntryValueBooleanByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out byte entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBooleanByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueBooleanByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValue16bit(IntPtr item, int set_index, uint entry_type, out ushort entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValue16bit(IntPtr item, int set_index, uint entry_type, out ushort entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue16bit(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValue16bit(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValue16bitByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out ushort entry_value, IntPtr error)
+        public int ItemGetEntryValue16bitByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out ushort entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue16bitByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValue16bitByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValue16bitByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out ushort entry_value, IntPtr error)
+        public int ItemGetEntryValue16bitByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out ushort entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue16bitByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValue16bitByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValue32bit(IntPtr item, int set_index, uint entry_type, out uint entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValue32bit(IntPtr item, int set_index, uint entry_type, out uint entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue32bit(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValue32bit(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValue32bitByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out uint entry_value, IntPtr error)
+        public int ItemGetEntryValue32bitByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out uint entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue32bitByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValue32bitByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValue32bitByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out uint entry_value, IntPtr error)
+        public int ItemGetEntryValue32bitByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out uint entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue32bitByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValue32bitByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValue64bit(IntPtr item, int set_index, uint entry_type, out ulong entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValue64bit(IntPtr item, int set_index, uint entry_type, out ulong entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue64bit(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValue64bit(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValue64bitByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out ulong entry_value, IntPtr error)
+        public int ItemGetEntryValue64bitByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out ulong entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue64bitByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValue64bitByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValue64bitByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out ulong entry_value, IntPtr error)
+        public int ItemGetEntryValue64bitByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out ulong entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValue64bitByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValue64bitByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueFiletime(IntPtr item, int set_index, uint entry_type, out ulong entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValueFiletime(IntPtr item, int set_index, uint entry_type, out ulong entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueFiletime(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValueFiletime(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValueFiletimeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out ulong entry_value, IntPtr error)
+        public int ItemGetEntryValueFiletimeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out ulong entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueFiletimeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueFiletimeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueFiletimeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out ulong entry_value, IntPtr error)
+        public int ItemGetEntryValueFiletimeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out ulong entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueFiletimeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueFiletimeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueSize(IntPtr item, int set_index, uint entry_type, out UIntPtr entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValueSize(IntPtr item, int set_index, uint entry_type, out UIntPtr entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueSize(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValueSize(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValueSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr entry_value, IntPtr error)
+        public int ItemGetEntryValueSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr entry_value, IntPtr error)
+        public int ItemGetEntryValueSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueFloatingPoint(IntPtr item, int set_index, uint entry_type, out double entry_value, byte flags, IntPtr error)
+        public int ItemGetEntryValueFloatingPoint(IntPtr item, int set_index, uint entry_type, out double entry_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueFloatingPoint(item, set_index, entry_type, out entry_value, flags, error);
+            return NativeWin32.ItemGetEntryValueFloatingPoint(item, set_index, entry_type, out entry_value, flags, out error);
         }
-        public int ItemGetEntryValueFloatingPointByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out double entry_value, IntPtr error)
+        public int ItemGetEntryValueFloatingPointByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out double entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueFloatingPointByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueFloatingPointByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueFloatingPointByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out double entry_value, IntPtr error)
+        public int ItemGetEntryValueFloatingPointByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out double entry_value, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueFloatingPointByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, error);
+            return NativeWin32.ItemGetEntryValueFloatingPointByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out entry_value, out error);
         }
-        public int ItemGetEntryValueUtf8StringSize(IntPtr item, int set_index, uint entry_type, out UIntPtr utf8_string_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueUtf8StringSize(IntPtr item, int set_index, uint entry_type, out UIntPtr utf8_string_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf8StringSize(item, set_index, entry_type, out utf8_string_size, flags, error);
+            return NativeWin32.ItemGetEntryValueUtf8StringSize(item, set_index, entry_type, out utf8_string_size, flags, out error);
         }
-        public int ItemGetEntryValueUtf8StringSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr utf8_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf8StringSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf8StringSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out utf8_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf8StringSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out utf8_string_size, out error);
         }
-        public int ItemGetEntryValueUtf8StringSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr utf8_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf8StringSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf8StringSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out utf8_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf8StringSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out utf8_string_size, out error);
         }
-        public int ItemGetEntryValueUtf8String(IntPtr item, int set_index, uint entry_type, byte[] utf8_string, UIntPtr utf8_string_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueUtf8String(IntPtr item, int set_index, uint entry_type, byte[] utf8_string, UIntPtr utf8_string_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf8String(item, set_index, entry_type, utf8_string, utf8_string_size, flags, error);
+            return NativeWin32.ItemGetEntryValueUtf8String(item, set_index, entry_type, utf8_string, utf8_string_size, flags, out error);
         }
-        public int ItemGetEntryValueUtf8StringByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf8StringByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf8StringByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, utf8_string, utf8_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf8StringByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, utf8_string, utf8_string_size, out error);
         }
-        public int ItemGetEntryValueUtf8StringByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf8StringByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf8StringByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, utf8_string, utf8_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf8StringByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, utf8_string, utf8_string_size, out error);
         }
-        public int ItemGetEntryValueUtf16StringSize(IntPtr item, int set_index, uint entry_type, out UIntPtr utf16_string_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueUtf16StringSize(IntPtr item, int set_index, uint entry_type, out UIntPtr utf16_string_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf16StringSize(item, set_index, entry_type, out utf16_string_size, flags, error);
+            return NativeWin32.ItemGetEntryValueUtf16StringSize(item, set_index, entry_type, out utf16_string_size, flags, out error);
         }
-        public int ItemGetEntryValueUtf16StringSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr utf16_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf16StringSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf16StringSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out utf16_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf16StringSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out utf16_string_size, out error);
         }
-        public int ItemGetEntryValueUtf16StringSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr utf16_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf16StringSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf16StringSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out utf16_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf16StringSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out utf16_string_size, out error);
         }
-        public int ItemGetEntryValueUtf16String(IntPtr item, int set_index, uint entry_type, ushort[] utf16_string, UIntPtr utf16_string_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueUtf16String(IntPtr item, int set_index, uint entry_type, ushort[] utf16_string, UIntPtr utf16_string_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf16String(item, set_index, entry_type, utf16_string, utf16_string_size, flags, error);
+            return NativeWin32.ItemGetEntryValueUtf16String(item, set_index, entry_type, utf16_string, utf16_string_size, flags, out error);
         }
-        public int ItemGetEntryValueUtf16StringByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf16StringByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf16StringByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, utf16_string, utf16_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf16StringByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, utf16_string, utf16_string_size, out error);
         }
-        public int ItemGetEntryValueUtf16StringByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int ItemGetEntryValueUtf16StringByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueUtf16StringByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, utf16_string, utf16_string_size, error);
+            return NativeWin32.ItemGetEntryValueUtf16StringByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, utf16_string, utf16_string_size, out error);
         }
-        public int ItemGetEntryValueBinaryDataSize(IntPtr item, int set_index, uint entry_type, out UIntPtr binary_data_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueBinaryDataSize(IntPtr item, int set_index, uint entry_type, out UIntPtr binary_data_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBinaryDataSize(item, set_index, entry_type, out binary_data_size, flags, error);
+            return NativeWin32.ItemGetEntryValueBinaryDataSize(item, set_index, entry_type, out binary_data_size, flags, out error);
         }
-        public int ItemGetEntryValueBinaryDataSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr binary_data_size, IntPtr error)
+        public int ItemGetEntryValueBinaryDataSizeByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, out UIntPtr binary_data_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBinaryDataSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out binary_data_size, error);
+            return NativeWin32.ItemGetEntryValueBinaryDataSizeByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, out binary_data_size, out error);
         }
-        public int ItemGetEntryValueBinaryDataSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr binary_data_size, IntPtr error)
+        public int ItemGetEntryValueBinaryDataSizeByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, out UIntPtr binary_data_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBinaryDataSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out binary_data_size, error);
+            return NativeWin32.ItemGetEntryValueBinaryDataSizeByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, out binary_data_size, out error);
         }
-        public int ItemGetEntryValueBinaryData(IntPtr item, int set_index, uint entry_type, byte[] binary_data, UIntPtr binary_data_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueBinaryData(IntPtr item, int set_index, uint entry_type, byte[] binary_data, UIntPtr binary_data_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBinaryData(item, set_index, entry_type, binary_data, binary_data_size, flags, error);
+            return NativeWin32.ItemGetEntryValueBinaryData(item, set_index, entry_type, binary_data, binary_data_size, flags, out error);
         }
-        public int ItemGetEntryValueBinaryDataByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, byte[] binary_data, UIntPtr binary_data_size, IntPtr error)
+        public int ItemGetEntryValueBinaryDataByUtf8Name(IntPtr item, int set_index, byte[] utf8_entry_name, UIntPtr utf8_entry_name_length, byte[] binary_data, UIntPtr binary_data_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBinaryDataByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, binary_data, binary_data_size, error);
+            return NativeWin32.ItemGetEntryValueBinaryDataByUtf8Name(item, set_index, utf8_entry_name, utf8_entry_name_length, binary_data, binary_data_size, out error);
         }
-        public int ItemGetEntryValueBinaryDataByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, byte[] binary_data, UIntPtr binary_data_size, IntPtr error)
+        public int ItemGetEntryValueBinaryDataByUtf16Name(IntPtr item, int set_index, ushort[] utf16_entry_name, UIntPtr utf16_entry_name_length, byte[] binary_data, UIntPtr binary_data_size, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueBinaryDataByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, binary_data, binary_data_size, error);
+            return NativeWin32.ItemGetEntryValueBinaryDataByUtf16Name(item, set_index, utf16_entry_name, utf16_entry_name_length, binary_data, binary_data_size, out error);
         }
-        public int ItemGetEntryValueGuid(IntPtr item, int set_index, uint entry_type, byte[] guid, UIntPtr guid_size, byte flags, IntPtr error)
+        public int ItemGetEntryValueGuid(IntPtr item, int set_index, uint entry_type, byte[] guid, UIntPtr guid_size, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryValueGuid(item, set_index, entry_type, guid, guid_size, flags, error);
+            return NativeWin32.ItemGetEntryValueGuid(item, set_index, entry_type, guid, guid_size, flags, out error);
         }
-        public int ItemGetEntryMultiValue(IntPtr item, int set_index, uint entry_type, out IntPtr multi_value, byte flags, IntPtr error)
+        public int ItemGetEntryMultiValue(IntPtr item, int set_index, uint entry_type, out IntPtr multi_value, byte flags, out IntPtr error)
         {
-            return NativeWin32.ItemGetEntryMultiValue(item, set_index, entry_type, out multi_value, flags, error);
+            return NativeWin32.ItemGetEntryMultiValue(item, set_index, entry_type, out multi_value, flags, out error);
         }
-        public int RecordEntryGetValueDataSize(IntPtr record_entry, out UIntPtr value_data_size, IntPtr error)
+        public int RecordEntryGetValueDataSize(IntPtr record_entry, out UIntPtr value_data_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueDataSize(record_entry, out value_data_size, error);
+            return NativeWin32.RecordEntryGetValueDataSize(record_entry, out value_data_size, out error);
         }
-        public int RecordEntryCopyValueData(IntPtr record_entry, byte[] value_data, UIntPtr value_data_size, IntPtr error)
+        public int RecordEntryCopyValueData(IntPtr record_entry, byte[] value_data, UIntPtr value_data_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryCopyValueData(record_entry, value_data, value_data_size, error);
+            return NativeWin32.RecordEntryCopyValueData(record_entry, value_data, value_data_size, out error);
         }
-        public int RecordEntryGetValueBoolean(IntPtr record_entry, out byte value_boolean, IntPtr error)
+        public int RecordEntryGetValueBoolean(IntPtr record_entry, out byte value_boolean, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueBoolean(record_entry, out value_boolean, error);
+            return NativeWin32.RecordEntryGetValueBoolean(record_entry, out value_boolean, out error);
         }
-        public int RecordEntryGetValue16bit(IntPtr record_entry, out ushort value_16bit, IntPtr error)
+        public int RecordEntryGetValue16bit(IntPtr record_entry, out ushort value_16bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValue16bit(record_entry, out value_16bit, error);
+            return NativeWin32.RecordEntryGetValue16bit(record_entry, out value_16bit, out error);
         }
-        public int RecordEntryGetValue32bit(IntPtr record_entry, out uint value_32bit, IntPtr error)
+        public int RecordEntryGetValue32bit(IntPtr record_entry, out uint value_32bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValue32bit(record_entry, out value_32bit, error);
+            return NativeWin32.RecordEntryGetValue32bit(record_entry, out value_32bit, out error);
         }
-        public int RecordEntryGetValue64bit(IntPtr record_entry, out ulong value_64bit, IntPtr error)
+        public int RecordEntryGetValue64bit(IntPtr record_entry, out ulong value_64bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValue64bit(record_entry, out value_64bit, error);
+            return NativeWin32.RecordEntryGetValue64bit(record_entry, out value_64bit, out error);
         }
-        public int RecordEntryGetValueFiletime(IntPtr record_entry, out ulong value_64bit, IntPtr error)
+        public int RecordEntryGetValueFiletime(IntPtr record_entry, out ulong value_64bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueFiletime(record_entry, out value_64bit, error);
+            return NativeWin32.RecordEntryGetValueFiletime(record_entry, out value_64bit, out error);
         }
-        public int RecordEntryGetValueSize(IntPtr record_entry, out UIntPtr value_size, IntPtr error)
+        public int RecordEntryGetValueSize(IntPtr record_entry, out UIntPtr value_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueSize(record_entry, out value_size, error);
+            return NativeWin32.RecordEntryGetValueSize(record_entry, out value_size, out error);
         }
-        public int RecordEntryGetValueFloatingPoint(IntPtr record_entry, out double value_floating_point, IntPtr error)
+        public int RecordEntryGetValueFloatingPoint(IntPtr record_entry, out double value_floating_point, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueFloatingPoint(record_entry, out value_floating_point, error);
+            return NativeWin32.RecordEntryGetValueFloatingPoint(record_entry, out value_floating_point, out error);
         }
-        public int RecordEntryGetValueUtf8StringSize(IntPtr record_entry, out UIntPtr utf8_string_size, IntPtr error)
+        public int RecordEntryGetValueUtf8StringSize(IntPtr record_entry, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueUtf8StringSize(record_entry, out utf8_string_size, error);
+            return NativeWin32.RecordEntryGetValueUtf8StringSize(record_entry, out utf8_string_size, out error);
         }
-        public int RecordEntryGetValueUtf8String(IntPtr record_entry, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int RecordEntryGetValueUtf8String(IntPtr record_entry, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueUtf8String(record_entry, utf8_string, utf8_string_size, error);
+            return NativeWin32.RecordEntryGetValueUtf8String(record_entry, utf8_string, utf8_string_size, out error);
         }
-        public int RecordEntryGetValueUtf16StringSize(IntPtr record_entry, out UIntPtr utf16_string_size, IntPtr error)
+        public int RecordEntryGetValueUtf16StringSize(IntPtr record_entry, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueUtf16StringSize(record_entry, out utf16_string_size, error);
+            return NativeWin32.RecordEntryGetValueUtf16StringSize(record_entry, out utf16_string_size, out error);
         }
-        public int RecordEntryGetValueUtf16String(IntPtr record_entry, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int RecordEntryGetValueUtf16String(IntPtr record_entry, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueUtf16String(record_entry, utf16_string, utf16_string_size, error);
+            return NativeWin32.RecordEntryGetValueUtf16String(record_entry, utf16_string, utf16_string_size, out error);
         }
-        public int MessageGetEntryValueUtf8StringSize(IntPtr message, uint entry_type, out UIntPtr utf8_string_size, IntPtr error)
+        public int MessageGetEntryValueUtf8StringSize(IntPtr message, uint entry_type, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.MessageGetEntryValueUtf8StringSize(message, entry_type, out utf8_string_size, error);
+            return NativeWin32.MessageGetEntryValueUtf8StringSize(message, entry_type, out utf8_string_size, out error);
         }
-        public int MessageGetEntryValueUtf8String(IntPtr message, uint entry_type, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int MessageGetEntryValueUtf8String(IntPtr message, uint entry_type, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.MessageGetEntryValueUtf8String(message, entry_type, utf8_string, utf8_string_size, error);
+            return NativeWin32.MessageGetEntryValueUtf8String(message, entry_type, utf8_string, utf8_string_size, out error);
         }
-        public int MessageGetEntryValueUtf16StringSize(IntPtr message, uint entry_type, out UIntPtr utf16_string_size, IntPtr error)
+        public int MessageGetEntryValueUtf16StringSize(IntPtr message, uint entry_type, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.MessageGetEntryValueUtf16StringSize(message, entry_type, out utf16_string_size, error);
+            return NativeWin32.MessageGetEntryValueUtf16StringSize(message, entry_type, out utf16_string_size, out error);
         }
-        public int MessageGetEntryValueUtf16String(IntPtr message, uint entry_type, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int MessageGetEntryValueUtf16String(IntPtr message, uint entry_type, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.MessageGetEntryValueUtf16String(message, entry_type, utf16_string, utf16_string_size, error);
+            return NativeWin32.MessageGetEntryValueUtf16String(message, entry_type, utf16_string, utf16_string_size, out error);
         }
-        public int MessageGetClientSubmitTime(IntPtr message, out ulong filetime, IntPtr error)
+        public int MessageGetClientSubmitTime(IntPtr message, out ulong filetime, out IntPtr error)
         {
-            return NativeWin32.MessageGetClientSubmitTime(message, out filetime, error);
+            return NativeWin32.MessageGetClientSubmitTime(message, out filetime, out error);
         }
-        public int MessageGetDeliveryTime(IntPtr message, out ulong filetime, IntPtr error)
+        public int MessageGetDeliveryTime(IntPtr message, out ulong filetime, out IntPtr error)
         {
-            return NativeWin32.MessageGetDeliveryTime(message, out filetime, error);
+            return NativeWin32.MessageGetDeliveryTime(message, out filetime, out error);
         }
-        public int MessageGetCreationTime(IntPtr message, out ulong filetime, IntPtr error)
+        public int MessageGetCreationTime(IntPtr message, out ulong filetime, out IntPtr error)
         {
-            return NativeWin32.MessageGetCreationTime(message, out filetime, error);
+            return NativeWin32.MessageGetCreationTime(message, out filetime, out error);
         }
-        public int MessageGetModificationTime(IntPtr message, out ulong filetime, IntPtr error)
+        public int MessageGetModificationTime(IntPtr message, out ulong filetime, out IntPtr error)
         {
-            return NativeWin32.MessageGetModificationTime(message, out filetime, error);
+            return NativeWin32.MessageGetModificationTime(message, out filetime, out error);
         }
-        public int MessageGetNumberOfAttachments(IntPtr message, out int number_of_attachments, IntPtr error)
+        public int MessageGetNumberOfAttachments(IntPtr message, out int number_of_attachments, out IntPtr error)
         {
-            return NativeWin32.MessageGetNumberOfAttachments(message, out number_of_attachments, error);
+            return NativeWin32.MessageGetNumberOfAttachments(message, out number_of_attachments, out error);
         }
-        public int MessageGetAttachment(IntPtr message, int attachment_index, out IntPtr attachment, IntPtr error)
+        public int MessageGetAttachment(IntPtr message, int attachment_index, out IntPtr attachment, out IntPtr error)
         {
-            return NativeWin32.MessageGetAttachment(message, attachment_index, out attachment, error);
+            return NativeWin32.MessageGetAttachment(message, attachment_index, out attachment, out error);
         }
-        public int MessageGetAttachments(IntPtr message, out IntPtr attachments, IntPtr error)
+        public int MessageGetAttachments(IntPtr message, out IntPtr attachments, out IntPtr error)
         {
-            return NativeWin32.MessageGetAttachments(message, out attachments, error);
+            return NativeWin32.MessageGetAttachments(message, out attachments, out error);
         }
-        public int MessageGetRecipients(IntPtr message, out IntPtr recipients, IntPtr error)
+        public int MessageGetRecipients(IntPtr message, out IntPtr recipients, out IntPtr error)
         {
-            return NativeWin32.MessageGetRecipients(message, out recipients, error);
+            return NativeWin32.MessageGetRecipients(message, out recipients, out error);
         }
-        public int MessageGetPlainTextBodySize(IntPtr message, out UIntPtr size, IntPtr error)
+        public int MessageGetPlainTextBodySize(IntPtr message, out UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MessageGetPlainTextBodySize(message, out size, error);
+            return NativeWin32.MessageGetPlainTextBodySize(message, out size, out error);
         }
-        public int MessageGetPlainTextBody(IntPtr message, byte[] message_body, UIntPtr size, IntPtr error)
+        public int MessageGetPlainTextBody(IntPtr message, byte[] message_body, UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MessageGetPlainTextBody(message, message_body, size, error);
+            return NativeWin32.MessageGetPlainTextBody(message, message_body, size, out error);
         }
-        public int MessageGetRtfBodySize(IntPtr message, out UIntPtr size, IntPtr error)
+        public int MessageGetRtfBodySize(IntPtr message, out UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MessageGetRtfBodySize(message, out size, error);
+            return NativeWin32.MessageGetRtfBodySize(message, out size, out error);
         }
-        public int MessageGetRtfBody(IntPtr message, byte[] message_body, UIntPtr size, IntPtr error)
+        public int MessageGetRtfBody(IntPtr message, byte[] message_body, UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MessageGetRtfBody(message, message_body, size, error);
+            return NativeWin32.MessageGetRtfBody(message, message_body, size, out error);
         }
-        public int MessageGetHtmlBodySize(IntPtr message, out UIntPtr size, IntPtr error)
+        public int MessageGetHtmlBodySize(IntPtr message, out UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MessageGetHtmlBodySize(message, out size, error);
+            return NativeWin32.MessageGetHtmlBodySize(message, out size, out error);
         }
-        public int MessageGetHtmlBody(IntPtr message, byte[] message_body, UIntPtr size, IntPtr error)
+        public int MessageGetHtmlBody(IntPtr message, byte[] message_body, UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MessageGetHtmlBody(message, message_body, size, error);
+            return NativeWin32.MessageGetHtmlBody(message, message_body, size, out error);
         }
-        public int MultiValueFree(out IntPtr multi_value, IntPtr error)
+        public int MultiValueFree(out IntPtr multi_value, out IntPtr error)
         {
-            return NativeWin32.MultiValueFree(out multi_value, error);
+            return NativeWin32.MultiValueFree(out multi_value, out error);
         }
-        public int MultiValueGetNumberOfValues(IntPtr multi_value, out int number_of_values, IntPtr error)
+        public int MultiValueGetNumberOfValues(IntPtr multi_value, out int number_of_values, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetNumberOfValues(multi_value, out number_of_values, error);
+            return NativeWin32.MultiValueGetNumberOfValues(multi_value, out number_of_values, out error);
         }
-        public int MultiValueGetValue(IntPtr multi_value, int value_index, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, IntPtr error)
+        public int MultiValueGetValue(IntPtr multi_value, int value_index, out uint value_type, out IntPtr value_data, out UIntPtr value_data_size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValue(multi_value, value_index, out value_type, out value_data, out value_data_size, error);
+            return NativeWin32.MultiValueGetValue(multi_value, value_index, out value_type, out value_data, out value_data_size, out error);
         }
-        public int MultiValueGetValue32bit(IntPtr multi_value, int value_index, out uint value, IntPtr error)
+        public int MultiValueGetValue32bit(IntPtr multi_value, int value_index, out uint value, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValue32bit(multi_value, value_index, out value, error);
+            return NativeWin32.MultiValueGetValue32bit(multi_value, value_index, out value, out error);
         }
-        public int MultiValueGetValue64bit(IntPtr multi_value, int value_index, out ulong value, IntPtr error)
+        public int MultiValueGetValue64bit(IntPtr multi_value, int value_index, out ulong value, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValue64bit(multi_value, value_index, out value, error);
+            return NativeWin32.MultiValueGetValue64bit(multi_value, value_index, out value, out error);
         }
-        public int MultiValueGetValueFiletime(IntPtr multi_value, int value_index, out ulong filetime, IntPtr error)
+        public int MultiValueGetValueFiletime(IntPtr multi_value, int value_index, out ulong filetime, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueFiletime(multi_value, value_index, out filetime, error);
+            return NativeWin32.MultiValueGetValueFiletime(multi_value, value_index, out filetime, out error);
         }
-        public int MultiValueGetValueUtf8StringSize(IntPtr multi_value, int value_index, out UIntPtr utf8_string_size, IntPtr error)
+        public int MultiValueGetValueUtf8StringSize(IntPtr multi_value, int value_index, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueUtf8StringSize(multi_value, value_index, out utf8_string_size, error);
+            return NativeWin32.MultiValueGetValueUtf8StringSize(multi_value, value_index, out utf8_string_size, out error);
         }
-        public int MultiValueGetValueUtf8String(IntPtr multi_value, int value_index, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int MultiValueGetValueUtf8String(IntPtr multi_value, int value_index, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueUtf8String(multi_value, value_index, utf8_string, utf8_string_size, error);
+            return NativeWin32.MultiValueGetValueUtf8String(multi_value, value_index, utf8_string, utf8_string_size, out error);
         }
-        public int MultiValueGetValueUtf16StringSize(IntPtr multi_value, int value_index, out UIntPtr utf16_string_size, IntPtr error)
+        public int MultiValueGetValueUtf16StringSize(IntPtr multi_value, int value_index, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueUtf16StringSize(multi_value, value_index, out utf16_string_size, error);
+            return NativeWin32.MultiValueGetValueUtf16StringSize(multi_value, value_index, out utf16_string_size, out error);
         }
-        public int MultiValueGetValueUtf16String(IntPtr multi_value, int value_index, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int MultiValueGetValueUtf16String(IntPtr multi_value, int value_index, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueUtf16String(multi_value, value_index, utf16_string, utf16_string_size, error);
+            return NativeWin32.MultiValueGetValueUtf16String(multi_value, value_index, utf16_string, utf16_string_size, out error);
         }
-        public int MultiValueGetValueBinaryDataSize(IntPtr multi_value, int value_index, out UIntPtr size, IntPtr error)
+        public int MultiValueGetValueBinaryDataSize(IntPtr multi_value, int value_index, out UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueBinaryDataSize(multi_value, value_index, out size, error);
+            return NativeWin32.MultiValueGetValueBinaryDataSize(multi_value, value_index, out size, out error);
         }
-        public int MultiValueGetValueBinaryData(IntPtr multi_value, int value_index, byte[] binary_data, UIntPtr size, IntPtr error)
+        public int MultiValueGetValueBinaryData(IntPtr multi_value, int value_index, byte[] binary_data, UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueBinaryData(multi_value, value_index, binary_data, size, error);
+            return NativeWin32.MultiValueGetValueBinaryData(multi_value, value_index, binary_data, size, out error);
         }
-        public int MultiValueGetValueGuid(IntPtr multi_value, int value_index, byte[] guid, UIntPtr size, IntPtr error)
+        public int MultiValueGetValueGuid(IntPtr multi_value, int value_index, byte[] guid, UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.MultiValueGetValueGuid(multi_value, value_index, guid, size, error);
+            return NativeWin32.MultiValueGetValueGuid(multi_value, value_index, guid, size, out error);
         }
-        public int NameToIdMapEntryGetType(IntPtr name_to_id_map_entry, out byte entry_type, IntPtr error)
+        public int NameToIdMapEntryGetType(IntPtr name_to_id_map_entry, out byte entry_type, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetType(name_to_id_map_entry, out entry_type, error);
+            return NativeWin32.NameToIdMapEntryGetType(name_to_id_map_entry, out entry_type, out error);
         }
-        public int NameToIdMapEntryGetNumber(IntPtr name_to_id_map_entry, out uint number, IntPtr error)
+        public int NameToIdMapEntryGetNumber(IntPtr name_to_id_map_entry, out uint number, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetNumber(name_to_id_map_entry, out number, error);
+            return NativeWin32.NameToIdMapEntryGetNumber(name_to_id_map_entry, out number, out error);
         }
-        public int NameToIdMapEntryGetUtf8StringSize(IntPtr name_to_id_map_entry, out UIntPtr utf8_string_size, IntPtr error)
+        public int NameToIdMapEntryGetUtf8StringSize(IntPtr name_to_id_map_entry, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetUtf8StringSize(name_to_id_map_entry, out utf8_string_size, error);
+            return NativeWin32.NameToIdMapEntryGetUtf8StringSize(name_to_id_map_entry, out utf8_string_size, out error);
         }
-        public int NameToIdMapEntryGetUtf8String(IntPtr name_to_id_map_entry, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int NameToIdMapEntryGetUtf8String(IntPtr name_to_id_map_entry, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetUtf8String(name_to_id_map_entry, utf8_string, utf8_string_size, error);
+            return NativeWin32.NameToIdMapEntryGetUtf8String(name_to_id_map_entry, utf8_string, utf8_string_size, out error);
         }
-        public int NameToIdMapEntryGetUtf16StringSize(IntPtr name_to_id_map_entry, out UIntPtr utf16_string_size, IntPtr error)
+        public int NameToIdMapEntryGetUtf16StringSize(IntPtr name_to_id_map_entry, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetUtf16StringSize(name_to_id_map_entry, out utf16_string_size, error);
+            return NativeWin32.NameToIdMapEntryGetUtf16StringSize(name_to_id_map_entry, out utf16_string_size, out error);
         }
-        public int NameToIdMapEntryGetUtf16String(IntPtr name_to_id_map_entry, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int NameToIdMapEntryGetUtf16String(IntPtr name_to_id_map_entry, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetUtf16String(name_to_id_map_entry, utf16_string, utf16_string_size, error);
+            return NativeWin32.NameToIdMapEntryGetUtf16String(name_to_id_map_entry, utf16_string, utf16_string_size, out error);
         }
-        public int NameToIdMapEntryGetGuid(IntPtr name_to_id_map_entry, byte[] guid, UIntPtr size, IntPtr error)
+        public int NameToIdMapEntryGetGuid(IntPtr name_to_id_map_entry, byte[] guid, UIntPtr size, out IntPtr error)
         {
-            return NativeWin32.NameToIdMapEntryGetGuid(name_to_id_map_entry, guid, size, error);
+            return NativeWin32.NameToIdMapEntryGetGuid(name_to_id_map_entry, guid, size, out error);
         }
         public void NotifySetVerbose(int verbose)
         {
             NativeWin32.NotifySetVerbose(verbose);
         }
-        public int NotifySetStream(IntPtr stream, IntPtr error)
+        public int NotifySetStream(IntPtr stream, out IntPtr error)
         {
-            return NativeWin32.NotifySetStream(stream, error);
+            return NativeWin32.NotifySetStream(stream, out error);
         }
-        public int NotifyStreamOpen([MarshalAs(UnmanagedType.LPStr)] string filename, IntPtr error)
+        public int NotifyStreamOpen([MarshalAs(UnmanagedType.LPStr)] string filename, out IntPtr error)
         {
-            return NativeWin32.NotifyStreamOpen(filename, error);
+            return NativeWin32.NotifyStreamOpen(filename, out error);
         }
-        public int NotifyStreamClose(IntPtr error)
+        public int NotifyStreamClose(out IntPtr error)
         {
-            return NativeWin32.NotifyStreamClose(error);
+            return NativeWin32.NotifyStreamClose(out error);
         }
-        public int RecordEntryFree(out IntPtr record_entry, IntPtr error)
+        public int RecordEntryFree(out IntPtr record_entry, out IntPtr error)
         {
-            return NativeWin32.RecordEntryFree(out record_entry, error);
+            return NativeWin32.RecordEntryFree(out record_entry, out error);
         }
-        public int RecordEntryGetEntryType(IntPtr record_entry, out uint entry_type, IntPtr error)
+        public int RecordEntryGetEntryType(IntPtr record_entry, out uint entry_type, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetEntryType(record_entry, out entry_type, error);
+            return NativeWin32.RecordEntryGetEntryType(record_entry, out entry_type, out error);
         }
-        public int RecordEntryGetValueType(IntPtr record_entry, out uint value_type, IntPtr error)
+        public int RecordEntryGetValueType(IntPtr record_entry, out uint value_type, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetValueType(record_entry, out value_type, error);
+            return NativeWin32.RecordEntryGetValueType(record_entry, out value_type, out error);
         }
-        public int RecordEntryGetNameToIdMapEntry(IntPtr record_entry, out IntPtr name_to_id_map_entry, IntPtr error)
+        public int RecordEntryGetNameToIdMapEntry(IntPtr record_entry, out IntPtr name_to_id_map_entry, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetNameToIdMapEntry(record_entry, out name_to_id_map_entry, error);
+            return NativeWin32.RecordEntryGetNameToIdMapEntry(record_entry, out name_to_id_map_entry, out error);
         }
-        public int RecordEntryGetDataSize(IntPtr record_entry, out UIntPtr data_size, IntPtr error)
+        public int RecordEntryGetDataSize(IntPtr record_entry, out UIntPtr data_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataSize(record_entry, out data_size, error);
+            return NativeWin32.RecordEntryGetDataSize(record_entry, out data_size, out error);
         }
-        public int RecordEntryGetData(IntPtr record_entry, byte[] data, UIntPtr data_size, IntPtr error)
+        public int RecordEntryGetData(IntPtr record_entry, byte[] data, UIntPtr data_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetData(record_entry, data, data_size, error);
+            return NativeWin32.RecordEntryGetData(record_entry, data, data_size, out error);
         }
-        public int RecordEntryGetDataAsBoolean(IntPtr record_entry, out byte value_boolean, IntPtr error)
+        public int RecordEntryGetDataAsBoolean(IntPtr record_entry, out byte value_boolean, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsBoolean(record_entry, out value_boolean, error);
+            return NativeWin32.RecordEntryGetDataAsBoolean(record_entry, out value_boolean, out error);
         }
-        public int RecordEntryGetDataAs16bitInteger(IntPtr record_entry, out ushort value_16bit, IntPtr error)
+        public int RecordEntryGetDataAs16bitInteger(IntPtr record_entry, out ushort value_16bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAs16bitInteger(record_entry, out value_16bit, error);
+            return NativeWin32.RecordEntryGetDataAs16bitInteger(record_entry, out value_16bit, out error);
         }
-        public int RecordEntryGetDataAs32bitInteger(IntPtr record_entry, out uint value_32bit, IntPtr error)
+        public int RecordEntryGetDataAs32bitInteger(IntPtr record_entry, out uint value_32bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAs32bitInteger(record_entry, out value_32bit, error);
+            return NativeWin32.RecordEntryGetDataAs32bitInteger(record_entry, out value_32bit, out error);
         }
-        public int RecordEntryGetDataAs64bitInteger(IntPtr record_entry, out ulong value_64bit, IntPtr error)
+        public int RecordEntryGetDataAs64bitInteger(IntPtr record_entry, out ulong value_64bit, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAs64bitInteger(record_entry, out value_64bit, error);
+            return NativeWin32.RecordEntryGetDataAs64bitInteger(record_entry, out value_64bit, out error);
         }
-        public int RecordEntryGetDataAsFiletime(IntPtr record_entry, out ulong filetime, IntPtr error)
+        public int RecordEntryGetDataAsFiletime(IntPtr record_entry, out ulong filetime, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsFiletime(record_entry, out filetime, error);
+            return NativeWin32.RecordEntryGetDataAsFiletime(record_entry, out filetime, out error);
         }
-        public int RecordEntryGetDataAsFloatingtime(IntPtr record_entry, out ulong floatingtime, IntPtr error)
+        public int RecordEntryGetDataAsFloatingtime(IntPtr record_entry, out ulong floatingtime, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsFloatingtime(record_entry, out floatingtime, error);
+            return NativeWin32.RecordEntryGetDataAsFloatingtime(record_entry, out floatingtime, out error);
         }
-        public int RecordEntryGetDataAsSize(IntPtr record_entry, out long value_size, IntPtr error)
+        public int RecordEntryGetDataAsSize(IntPtr record_entry, out long value_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsSize(record_entry, out value_size, error);
+            return NativeWin32.RecordEntryGetDataAsSize(record_entry, out value_size, out error);
         }
-        public int RecordEntryGetDataAsFloatingPoint(IntPtr record_entry, out double value_floating_point, IntPtr error)
+        public int RecordEntryGetDataAsFloatingPoint(IntPtr record_entry, out double value_floating_point, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsFloatingPoint(record_entry, out value_floating_point, error);
+            return NativeWin32.RecordEntryGetDataAsFloatingPoint(record_entry, out value_floating_point, out error);
         }
-        public int RecordEntryGetDataAsUtf8StringSize(IntPtr record_entry, out UIntPtr utf8_string_size, IntPtr error)
+        public int RecordEntryGetDataAsUtf8StringSize(IntPtr record_entry, out UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsUtf8StringSize(record_entry, out utf8_string_size, error);
+            return NativeWin32.RecordEntryGetDataAsUtf8StringSize(record_entry, out utf8_string_size, out error);
         }
-        public int RecordEntryGetDataAsUtf8String(IntPtr record_entry, byte[] utf8_string, UIntPtr utf8_string_size, IntPtr error)
+        public int RecordEntryGetDataAsUtf8String(IntPtr record_entry, byte[] utf8_string, UIntPtr utf8_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsUtf8String(record_entry, utf8_string, utf8_string_size, error);
+            return NativeWin32.RecordEntryGetDataAsUtf8String(record_entry, utf8_string, utf8_string_size, out error);
         }
-        public int RecordEntryGetDataAsUtf16StringSize(IntPtr record_entry, out UIntPtr utf16_string_size, IntPtr error)
+        public int RecordEntryGetDataAsUtf16StringSize(IntPtr record_entry, out UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsUtf16StringSize(record_entry, out utf16_string_size, error);
+            return NativeWin32.RecordEntryGetDataAsUtf16StringSize(record_entry, out utf16_string_size, out error);
         }
-        public int RecordEntryGetDataAsUtf16String(IntPtr record_entry, ushort[] utf16_string, UIntPtr utf16_string_size, IntPtr error)
+        public int RecordEntryGetDataAsUtf16String(IntPtr record_entry, ushort[] utf16_string, UIntPtr utf16_string_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsUtf16String(record_entry, utf16_string, utf16_string_size, error);
+            return NativeWin32.RecordEntryGetDataAsUtf16String(record_entry, utf16_string, utf16_string_size, out error);
         }
-        public int RecordEntryGetDataAsGuid(IntPtr record_entry, byte[] gui_data, UIntPtr guid_data_size, IntPtr error)
+        public int RecordEntryGetDataAsGuid(IntPtr record_entry, byte[] gui_data, UIntPtr guid_data_size, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetDataAsGuid(record_entry, gui_data, guid_data_size, error);
+            return NativeWin32.RecordEntryGetDataAsGuid(record_entry, gui_data, guid_data_size, out error);
         }
-        public int RecordEntryGetMultiValue(IntPtr record_entry, out IntPtr multi_value, IntPtr error)
+        public int RecordEntryGetMultiValue(IntPtr record_entry, out IntPtr multi_value, out IntPtr error)
         {
-            return NativeWin32.RecordEntryGetMultiValue(record_entry, out multi_value, error);
+            return NativeWin32.RecordEntryGetMultiValue(record_entry, out multi_value, out error);
         }
-        public long RecordEntryReadBuffer(IntPtr record_entry, byte[] buffer, UIntPtr buffer_size, IntPtr error)
+        public long RecordEntryReadBuffer(IntPtr record_entry, byte[] buffer, UIntPtr buffer_size, out IntPtr error)
         {
-            int native_result = NativeWin32.RecordEntryReadBuffer(record_entry, buffer, buffer_size, error);
+            int native_result = NativeWin32.RecordEntryReadBuffer(record_entry, buffer, buffer_size, out error);
             return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
-        public long RecordEntrySeekOffset(IntPtr record_entry, long offset, int whence, IntPtr error)
+        public long RecordEntrySeekOffset(IntPtr record_entry, long offset, int whence, out IntPtr error)
         {
-            int native_result = NativeWin32.RecordEntrySeekOffset(record_entry, offset, whence, error);
+            int native_result = NativeWin32.RecordEntrySeekOffset(record_entry, offset, whence, out error);
             return native_result;  // 'int' to 'long' (32-Bit Platform)
         }
-        public int RecordSetFree(out IntPtr record_set, IntPtr error)
+        public int RecordSetFree(out IntPtr record_set, out IntPtr error)
         {
-            return NativeWin32.RecordSetFree(out record_set, error);
+            return NativeWin32.RecordSetFree(out record_set, out error);
         }
-        public int RecordSetGetNumberOfEntries(IntPtr record_set, out int number_of_entries, IntPtr error)
+        public int RecordSetGetNumberOfEntries(IntPtr record_set, out int number_of_entries, out IntPtr error)
         {
-            return NativeWin32.RecordSetGetNumberOfEntries(record_set, out number_of_entries, error);
+            return NativeWin32.RecordSetGetNumberOfEntries(record_set, out number_of_entries, out error);
         }
-        public int RecordSetGetEntryByIndex(IntPtr record_set, int entry_index, out IntPtr record_entry, IntPtr error)
+        public int RecordSetGetEntryByIndex(IntPtr record_set, int entry_index, out IntPtr record_entry, out IntPtr error)
         {
-            return NativeWin32.RecordSetGetEntryByIndex(record_set, entry_index, out record_entry, error);
+            return NativeWin32.RecordSetGetEntryByIndex(record_set, entry_index, out record_entry, out error);
         }
-        public int RecordSetGetEntryByType(IntPtr record_set, uint entry_type, uint value_type, out IntPtr record_entry, byte flags, IntPtr error)
+        public int RecordSetGetEntryByType(IntPtr record_set, uint entry_type, uint value_type, out IntPtr record_entry, byte flags, out IntPtr error)
         {
-            return NativeWin32.RecordSetGetEntryByType(record_set, entry_type, value_type, out record_entry, flags, error);
+            return NativeWin32.RecordSetGetEntryByType(record_set, entry_type, value_type, out record_entry, flags, out error);
         }
-        public int RecordSetGetEntryByUtf8Name(IntPtr record_set, byte[] utf8_string, UIntPtr utf8_string_length, uint value_type, out IntPtr record_entry, byte flags, IntPtr error)
+        public int RecordSetGetEntryByUtf8Name(IntPtr record_set, byte[] utf8_string, UIntPtr utf8_string_length, uint value_type, out IntPtr record_entry, byte flags, out IntPtr error)
         {
-            return NativeWin32.RecordSetGetEntryByUtf8Name(record_set, utf8_string, utf8_string_length, value_type, out record_entry, flags, error);
+            return NativeWin32.RecordSetGetEntryByUtf8Name(record_set, utf8_string, utf8_string_length, value_type, out record_entry, flags, out error);
         }
-        public int RecordSetGetEntryByUtf16Name(IntPtr record_set, ushort[] utf16_string, UIntPtr utf16_string_length, uint value_type, out IntPtr record_entry, byte flags, IntPtr error)
+        public int RecordSetGetEntryByUtf16Name(IntPtr record_set, ushort[] utf16_string, UIntPtr utf16_string_length, uint value_type, out IntPtr record_entry, byte flags, out IntPtr error)
         {
-            return NativeWin32.RecordSetGetEntryByUtf16Name(record_set, utf16_string, utf16_string_length, value_type, out record_entry, flags, error);
+            return NativeWin32.RecordSetGetEntryByUtf16Name(record_set, utf16_string, utf16_string_length, value_type, out record_entry, flags, out error);
         }
         public int GetAccessFlagsRead()
         {
             return NativeWin32.GetAccessFlagsRead();
         }
-        public int GetCodepage(out int codepage, IntPtr error)
+        public int GetCodepage(out int codepage, out IntPtr error)
         {
-            return NativeWin32.GetCodepage(out codepage, error);
+            return NativeWin32.GetCodepage(out codepage, out error);
         }
-        public int SetCodepage(int codepage, IntPtr error)
+        public int SetCodepage(int codepage, out IntPtr error)
         {
-            return NativeWin32.SetCodepage(codepage, error);
+            return NativeWin32.SetCodepage(codepage, out error);
         }
-        public int CheckFileSignature([MarshalAs(UnmanagedType.LPStr)] string filename, IntPtr error)
+        public int CheckFileSignature([MarshalAs(UnmanagedType.LPStr)] string filename, out IntPtr error)
         {
-            return NativeWin32.CheckFileSignature(filename, error);
+            return NativeWin32.CheckFileSignature(filename, out error);
         }
-        public int CheckFileSignatureWide([MarshalAs(UnmanagedType.LPWStr)] string filename, IntPtr error)
+        public int CheckFileSignatureWide([MarshalAs(UnmanagedType.LPWStr)] string filename, out IntPtr error)
         {
-            return NativeWin32.CheckFileSignatureWide(filename, error);
+            return NativeWin32.CheckFileSignatureWide(filename, out error);
         }
-        public int CheckFileSignatureFileIoHandle(IntPtr file_io_handle, IntPtr error)
+        public int CheckFileSignatureFileIoHandle(IntPtr file_io_handle, out IntPtr error)
         {
-            return NativeWin32.CheckFileSignatureFileIoHandle(file_io_handle, error);
+            return NativeWin32.CheckFileSignatureFileIoHandle(file_io_handle, out error);
         }
     }
 }

@@ -1,13 +1,14 @@
 ﻿using HtmlAgilityPack;
 using LibPff.Interop;
+using LibPff.Utility;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace LibPff.Model
 {
     internal class Message : Item, IMessage
     {
-        public Message(nint handle, INativeAdapter native, bool ownsHandle) : base(handle, native, ownsHandle)
+        public Message(nint handle, INativeAdapter native, bool ownsHandle)
+            : base(handle, native, ownsHandle)
         {
         }
 
@@ -15,22 +16,43 @@ namespace LibPff.Model
         {
             get
             {
-                var result = TryGetEntryValueUtf8(EntryType.MessageSubject, out var subject);
-                return result && subject != null ? subject : "<no subject>";
+                return TryGetEntryValueUtf8((uint)EntryType.MessageSubject, out var subject)
+                    && !string.IsNullOrWhiteSpace(subject)
+                    ? subject
+                    : "<no subject>";
             }
         }
+
         public string? BodyPlainText
         {
             get
             {
-                try
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.MessageGetPlainTextBodySize(RawHandle, out nuint size, out error);
+                if (rc == 1 && size > 0)
                 {
-                    return GetBodyPlainTextAsync().GetAwaiter().GetResult();
+                    var buf = new byte[(int)size];
+                    rc = Native.MessageGetPlainTextBody(RawHandle, buf, size, out error);
+
+                    if (rc == 1)
+                    {
+                        int valid = buf.Length;
+                        if (valid > 0 && buf[valid - 1] == 0)
+                            valid--;
+
+                        return DecodeBestEffort(buf[..valid]);
+                    }
+
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                 }
-                catch
-                {
-                    return null;
-                }
+
+                const uint PR_BODY = 0x1000;
+                if (TryGetRecordValue(PR_BODY, out string? bodyProp) && !string.IsNullOrWhiteSpace(bodyProp))
+                    return bodyProp;
+
+                return null;
             }
         }
 
@@ -38,22 +60,21 @@ namespace LibPff.Model
         {
             get
             {
-                // 1) RTF → HTML (beste Qualität)
                 if (BodyRtf is { } rtf)
                 {
-                    var htmlFromRtf = RtfToHtml(rtf);
-                    if (!string.IsNullOrWhiteSpace(htmlFromRtf))
-                        return WrapHtmlUtf8(htmlFromRtf);
+                    var html = RtfToHtml(rtf);
+                    if (!string.IsNullOrWhiteSpace(html))
+                        return WrapHtmlUtf8(html);
                 }
 
-                // 2) HTML aus PST (Fallback)
-                int rc = Native.MessageGetHtmlBodySize(RawHandle, out nuint size, nint.Zero);
+                IntPtr error = IntPtr.Zero;
+                int rc = Native.MessageGetHtmlBodySize(RawHandle, out nuint size, out error);
+
                 if (rc == 1 && size > 0)
                 {
-                    int len = checked((int)size);
-                    var buf = new byte[len];
+                    var buf = new byte[(int)size];
+                    rc = Native.MessageGetHtmlBody(RawHandle, buf, size, out error);
 
-                    rc = Native.MessageGetHtmlBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
                     if (rc == 1)
                     {
                         int valid = buf.Length;
@@ -64,9 +85,11 @@ namespace LibPff.Model
                         if (!string.IsNullOrWhiteSpace(html))
                             return WrapHtmlUtf8(html);
                     }
+
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                 }
 
-                // 3) Plaintext → HTML (Notlösung)
                 if (BodyPlainText is { } plain && !string.IsNullOrWhiteSpace(plain))
                 {
                     var html = "<pre>" + System.Net.WebUtility.HtmlEncode(plain) + "</pre>";
@@ -81,14 +104,25 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.MessageGetRtfBodySize(RawHandle, out nuint size, nint.Zero);
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.MessageGetRtfBodySize(RawHandle, out nuint size, out error);
                 if (rc != 1 || size == 0)
+                {
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                     return null;
+                }
 
                 var buf = new byte[(int)size];
-                rc = Native.MessageGetRtfBody(RawHandle, buf, size, nint.Zero);
+                rc = Native.MessageGetRtfBody(RawHandle, buf, size, out error);
+
                 if (rc != 1)
+                {
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                     return null;
+                }
 
                 return Encoding.ASCII.GetString(buf);
             }
@@ -98,77 +132,68 @@ namespace LibPff.Model
         {
             get
             {
-                // 1) RTF → HTML → Text (beste Qualität)
                 if (BodyRtf is { } rtf)
                 {
-                    var htmlFromRtf = RtfToHtml(rtf);
-                    var textFromRtf = HtmlToText(htmlFromRtf);
-                    if (!string.IsNullOrWhiteSpace(textFromRtf))
-                        return textFromRtf;
-                }
-
-                // 2) HTML aus PST → Text
-                if (BodyHtml is { } html)
-                {
+                    var html = RtfToHtml(rtf);
                     var text = HtmlToText(html);
                     if (!string.IsNullOrWhiteSpace(text))
                         return text;
                 }
 
-                // 3) Plaintext aus PST
+                if (BodyHtml is { } html2)
+                {
+                    var text = HtmlToText(html2);
+                    if (!string.IsNullOrWhiteSpace(text))
+                        return text;
+                }
+
                 if (BodyPlainText is { } plain && !string.IsNullOrWhiteSpace(plain))
                     return plain;
-
-                // 4) Optional: MIME-Fallbacks über Attachments
 
                 return null;
             }
         }
 
-        public async Task<string?> GetBodyPlainTextAsync()
+        public string? MimeBody
         {
-            // 1) Versuche libpff-Plaintext-Body
-            int rc = Native.MessageGetPlainTextBodySize(RawHandle, out nuint size, nint.Zero);
-            if (rc == 1 && size > 0)
-            {
-                int len = checked((int)size);
-                var buf = new byte[len];
-
-                rc = Native.MessageGetPlainTextBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
-                if (rc == 1)
-                {
-                    int valid = buf.Length;
-                    if (valid > 0 && buf[valid - 1] == 0)
-                        valid--;
-
-                    var text = DecodeBestEffort(buf[..valid]);
-                    return await Task.FromResult(text);
-                }
-            }
-
-            // 2) Fallback: PR_BODY (0x1000) als Unicode/String
-            const uint PR_BODY = 0x1000;
-            if (TryGetRecordValue(PR_BODY, out string? bodyProp) && !string.IsNullOrWhiteSpace(bodyProp))
-                return bodyProp;
-
-            return null;
+            get => "Content-Type: text/plain; charset=utf-8\r\n\r\n";
         }
 
+        public async Task<string?> GetBodyPlainTextAsync()
+        {
+            return await Task.FromResult(BodyPlainText);
+        }
 
         public Stream? OpenPlainTextBodyStream()
         {
-            int rc = Native.MessageGetPlainTextBodySize(RawHandle, out nuint size, nint.Zero);
-            if (rc != 1) return null;
-            int total = (int)size;
-            if (total == 0) return Stream.Null;
+            IntPtr error = IntPtr.Zero;
 
-            // Create a MemoryStream by reading the body in one go (simpler).
-            // For large bodies you can implement chunked streaming using libpff_message_get_plain_text_body with offsets.
+            int rc = Native.MessageGetPlainTextBodySize(RawHandle, out nuint size, out error);
+            if (rc != 1)
+            {
+                if (error != IntPtr.Zero)
+                    Native.ErrorFree(out error);
+                return null;
+            }
+
+            int total = (int)size;
+            if (total == 0)
+                return Stream.Null;
+
             var buf = new byte[total];
-            rc = Native.MessageGetPlainTextBody(RawHandle, buf, (nuint)buf.Length, nint.Zero);
-            if (rc != 1) return null;
+            rc = Native.MessageGetPlainTextBody(RawHandle, buf, size, out error);
+
+            if (rc != 1)
+            {
+                if (error != IntPtr.Zero)
+                    Native.ErrorFree(out error);
+                return null;
+            }
+
             int valid = buf.Length;
-            if (buf[buf.Length - 1] == 0) valid = buf.Length - 1;
+            if (buf[^1] == 0)
+                valid--;
+
             return new MemoryStream(buf, 0, valid, writable: false);
         }
 
@@ -176,19 +201,18 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.MessageGetClientSubmitTime(RawHandle, out ulong filetime, nint.Zero);
-                if (rc != 1) return null;
-                // FILETIME to DateTimeOffset conversion (Windows FILETIME is 100-nanosecond since 1601)
-                try
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.MessageGetClientSubmitTime(RawHandle, out ulong filetime, out error);
+                if (rc != 1)
                 {
-                    long ft = (long)filetime;
-                    var dt = DateTimeOffset.FromFileTime(ft);
-                    return dt;
-                }
-                catch
-                {
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                     return null;
                 }
+
+                try { return DateTimeOffset.FromFileTime((long)filetime); }
+                catch { return null; }
             }
         }
 
@@ -196,18 +220,18 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.MessageGetDeliveryTime(RawHandle, out ulong filetime, nint.Zero);
-                if (rc != 1) return null;
-                try
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.MessageGetDeliveryTime(RawHandle, out ulong filetime, out error);
+                if (rc != 1)
                 {
-                    long ft = (long)filetime;
-                    var dt = DateTimeOffset.FromFileTime(ft);
-                    return dt;
-                }
-                catch
-                {
+                    if (error != IntPtr.Zero)
+                        Native.ErrorFree(out error);
                     return null;
                 }
+
+                try { return DateTimeOffset.FromFileTime((long)filetime); }
+                catch { return null; }
             }
         }
 
@@ -250,12 +274,11 @@ namespace LibPff.Model
 
             try
             {
-                // künstliche Minimal-Mail: Header + Leerzeile
                 var raw = headers + "\r\n\r\n";
                 using var ms = new MemoryStream(Encoding.ASCII.GetBytes(raw));
                 var msg = MimeKit.MimeMessage.Load(ms);
 
-                IEnumerable<MimeKit.InternetAddress> addrs = field.ToLowerInvariant() switch
+                IEnumerable<MimeKit.InternetAddress> addrs = field switch
                 {
                     "to" => msg.To,
                     "cc" => msg.Cc,
@@ -279,8 +302,22 @@ namespace LibPff.Model
         {
             get
             {
-                int rc = Native.MessageGetNumberOfAttachments(RawHandle, out int number, nint.Zero);
-                if (rc != 1 && number != 0) throw new PffException($"MessageGetNumberOfAttachments failed: {rc}", rc);
+                IntPtr error = IntPtr.Zero;
+
+                int rc = Native.MessageGetNumberOfAttachments(RawHandle, out int number, out error);
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.MessageGetNumberOfAttachments),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 return number;
             }
         }
@@ -291,38 +328,64 @@ namespace LibPff.Model
             {
                 var list = new List<IAttachment>();
                 int count = AttachmentCount;
+
                 for (int i = 0; i < count; i++)
-                {
                     list.Add(GetAttachment(i)!);
-                }
+
                 return list;
             }
         }
 
         public IAttachment? GetAttachment(int index)
         {
-            int rc = Native.MessageGetAttachment(RawHandle, index, out nint attachment, nint.Zero);
-            //if (rc != 1 || attachment == nint.Zero) return null;
-            if (rc != 1 || attachment == nint.Zero) throw new PffException($"MessageGetAttachment({index}) failed: {rc}", rc); ;
-            return new Attachment(attachment, Native, ownsHandle: true);
-        }
+            IntPtr error = IntPtr.Zero;
 
-        public bool TryGetEntryValueUtf8(EntryType entryType, out string? value)
-        {
-            return TryGetEntryValueUtf8((uint)entryType, out value);
+            int rc = Native.MessageGetAttachment(RawHandle, index, out nint attachment, out error);
+
+            ReturnCode.Check(
+                rc,
+                error,
+                nameof(Native.MessageGetAttachment),
+                ptr =>
+                {
+                    var sb = new StringBuilder(4096);
+                    Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                    return sb.ToString();
+                },
+                ptr => Native.ErrorFree(out ptr)
+            );
+
+            return new Attachment(attachment, Native, ownsHandle: true);
         }
 
         public bool TryGetEntryValueUtf8(uint entryType, out string? value)
         {
             value = null;
-            int rc = Native.MessageGetEntryValueUtf8StringSize(RawHandle, entryType, out nuint size, nint.Zero);
-            if (rc != 1 || (int)size == 0) return false;
+
+            IntPtr error = IntPtr.Zero;
+
+            int rc = Native.MessageGetEntryValueUtf8StringSize(RawHandle, entryType, out nuint size, out error);
+            if (rc != 1 || size == 0)
+            {
+                if (error != IntPtr.Zero)
+                    Native.ErrorFree(out error);
+                return false;
+            }
+
             var buf = new byte[(int)size];
-            rc = Native.MessageGetEntryValueUtf8String(RawHandle, entryType, buf, (nuint)buf.Length, nint.Zero);
-            if (rc != 1) return false;
+
+            rc = Native.MessageGetEntryValueUtf8String(RawHandle, entryType, buf, size, out error);
+            if (rc != 1)
+            {
+                if (error != IntPtr.Zero)
+                    Native.ErrorFree(out error);
+                return false;
+            }
+
             int valid = buf.Length;
-            if (buf[buf.Length - 1] == 0) valid = buf.Length - 1;
-            //value = Encoding.UTF8.GetString(buf, 0, valid);
+            if (buf[^1] == 0)
+                valid--;
+
             value = DecodeBestEffort(buf[..valid]);
             return true;
         }
@@ -330,48 +393,27 @@ namespace LibPff.Model
         public bool TryGetEntryValueInt32(uint entryType, out int? value)
         {
             value = null;
-            // Without exact api for int entries at message level, try to use libpff_item_get_entry_value_32bit? May need adjustments.
+
+            if (TryGetRecordValue(entryType, out int v))
+            {
+                value = v;
+                return true;
+            }
+
             return false;
         }
 
         public bool TryGetEntryValueFiletime(uint entryType, out DateTimeOffset? value)
         {
             value = null;
-            // not implemented generically here
+
+            if (TryGetRecordValue(entryType, out DateTime dt))
+            {
+                value = new DateTimeOffset(dt, TimeSpan.Zero);
+                return true;
+            }
+
             return false;
-        }
-
-        private string? ExtractTextFromMimeAttachment(byte[] data)
-        {
-            try
-            {
-                var msg = MimeKit.MimeMessage.Load(new MemoryStream(data));
-
-                string? Extract(MimeKit.MimeEntity part)
-                {
-                    switch (part)
-                    {
-                        case MimeKit.TextPart text:
-                            return text.Text;
-
-                        case MimeKit.Multipart multipart:
-                            foreach (var sub in multipart)
-                            {
-                                var result = Extract(sub);
-                                if (result != null)
-                                    return result;
-                            }
-                            break;
-                    }
-                    return null;
-                }
-
-                return Extract(msg.Body);
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         private string? RtfToHtml(string? rtf)
@@ -379,14 +421,8 @@ namespace LibPff.Model
             if (string.IsNullOrWhiteSpace(rtf))
                 return null;
 
-            try
-            {
-                return RtfPipe.Rtf.ToHtml(rtf);
-            }
-            catch
-            {
-                return null;
-            }
+            try { return RtfPipe.Rtf.ToHtml(rtf); }
+            catch { return null; }
         }
 
         private string? HtmlToText(string? html)
@@ -394,7 +430,7 @@ namespace LibPff.Model
             if (string.IsNullOrWhiteSpace(html))
                 return null;
 
-            var doc = new HtmlAgilityPack.HtmlDocument();
+            var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
             var text = doc.DocumentNode.InnerText;
@@ -406,43 +442,31 @@ namespace LibPff.Model
             // 1. UTF-8 BOM
             if (data.Length >= 3 &&
                 data[0] == 0xEF && data[1] == 0xBB && data[2] == 0xBF)
-            {
                 return Encoding.UTF8.GetString(data, 3, data.Length - 3);
-            }
 
             // 2. UTF-16 LE BOM
             if (data.Length >= 2 &&
                 data[0] == 0xFF && data[1] == 0xFE)
-            {
                 return Encoding.Unicode.GetString(data, 2, data.Length - 2);
-            }
 
             // 3. UTF-16 BE BOM
             if (data.Length >= 2 &&
                 data[0] == 0xFE && data[1] == 0xFF)
-            {
                 return Encoding.BigEndianUnicode.GetString(data, 2, data.Length - 2);
-            }
 
             // 4. UTF-8 Heuristik
             try
             {
                 var utf8 = Encoding.UTF8.GetString(data);
-                var roundtrip = Encoding.UTF8.GetBytes(utf8);
-
-                if (roundtrip.SequenceEqual(data))
+                if (Encoding.UTF8.GetBytes(utf8).SequenceEqual(data))
                     return utf8;
             }
             catch { }
 
-            // 5. Windows-1252 (häufigster PST-Fall)
-            try
-            {
-                return Encoding.GetEncoding(1252).GetString(data);
-            }
+            // 5. Windows-1252
+            try { return Encoding.GetEncoding(1252).GetString(data); }
             catch { }
 
-            // 6. ISO-8859-1 fallback
             return Encoding.Latin1.GetString(data);
         }
 

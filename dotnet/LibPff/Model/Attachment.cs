@@ -1,9 +1,9 @@
 using LibPff.Interop;
+using LibPff.Utility;
+using System.Text;
 
 namespace LibPff.Model
 {
-    // TODO: use MAPI enums
-
     internal class Attachment : Item, IAttachment
     {
         private long? _sizeCache;
@@ -33,8 +33,7 @@ namespace LibPff.Model
                 return "attachment.bin";
             }
         }
-
-
+        
         public string? MimeType
         {
             get
@@ -43,7 +42,6 @@ namespace LibPff.Model
                 return TryGetRecordValue(MIME, out string? mime) ? mime : null;
             }
         }
-
 
         public string? ContentId
         {
@@ -58,16 +56,13 @@ namespace LibPff.Model
         {
             get
             {
-                // Inline attachments typically have a ContentId
                 const uint CID = 0x3712;
                 if (TryGetRecordValue(CID, out string? cid) && !string.IsNullOrWhiteSpace(cid))
                     return true;
 
-                // Some clients set PR_ATTACH_FLAGS (0x3714)
                 const uint FLAGS = 0x3714;
                 if (TryGetRecordValue(FLAGS, out uint flags))
                 {
-                    // Bit 0x00000004 = ATTACHMENT_IS_INLINE
                     if ((flags & 0x00000004) != 0)
                         return true;
                 }
@@ -80,9 +75,25 @@ namespace LibPff.Model
         {
             get
             {
-                if (_sizeCache.HasValue) return _sizeCache.Value;
-                int rc = Native.AttachmentGetDataSize(RawHandle, out long size, nint.Zero);
-                if (rc != 1) throw new PffException($"AttachmentGetDataSize failed: {rc}", rc);
+                if (_sizeCache.HasValue)
+                    return _sizeCache.Value;
+
+                IntPtr error = IntPtr.Zero;
+                int rc = Native.AttachmentGetDataSize(RawHandle, out long size, out error);
+
+                ReturnCode.Check(
+                    rc,
+                    error,
+                    nameof(Native.AttachmentGetDataSize),
+                    ptr =>
+                    {
+                        var sb = new StringBuilder(4096);
+                        Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                        return sb.ToString();
+                    },
+                    ptr => Native.ErrorFree(out ptr)
+                );
+
                 _sizeCache = size;
                 return size;
             }
@@ -93,20 +104,42 @@ namespace LibPff.Model
         public Stream? OpenDataStream()
         {
             long total = Size;
-            if (total == 0) return Stream.Null;
+            if (total == 0)
+                return Stream.Null;
 
             const int chunk = 64 * 1024;
             var ms = new MemoryStream((int)Math.Min(total, int.MaxValue));
             var buf = new byte[Math.Min(chunk, (int)total)];
+
             long read = 0;
 
             while (read < total)
             {
                 int toRead = (int)Math.Min(buf.Length, total - read);
-                long rc = Native.AttachmentDataReadBuffer(RawHandle, buf, (nuint)toRead, nint.Zero);
-                if (rc < 0) break;
+
+                IntPtr error = IntPtr.Zero;
+                long rc = Native.AttachmentDataReadBuffer(RawHandle, buf, (UIntPtr)toRead, out error);
+
+                if (rc < 0)
+                {
+                    ReturnCode.Check(
+                        (int)rc,
+                        error,
+                        nameof(Native.AttachmentDataReadBuffer),
+                        ptr =>
+                        {
+                            var sb = new StringBuilder(4096);
+                            Native.ErrorSprint(ptr, sb, (UIntPtr)sb.Capacity);
+                            return sb.ToString();
+                        },
+                        ptr => Native.ErrorFree(out ptr)
+                    );
+                }
+
                 int got = (int)rc;
-                if (got == 0) break;
+                if (got == 0)
+                    break;
+
                 ms.Write(buf, 0, got);
                 read += got;
             }
@@ -118,8 +151,11 @@ namespace LibPff.Model
         public async Task<byte[]?> ReadAllDataAsync()
         {
             using var s = OpenDataStream();
-            if (s == null) return null;
-            if (s == Stream.Null) return Array.Empty<byte>();
+            if (s == null)
+                return null;
+            if (s == Stream.Null)
+                return Array.Empty<byte>();
+
             using var ms = new MemoryStream();
             await s.CopyToAsync(ms);
             return ms.ToArray();
