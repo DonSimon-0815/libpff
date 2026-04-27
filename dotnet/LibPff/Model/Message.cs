@@ -2,6 +2,7 @@
 using LibPff.Interop;
 using LibPff.Utility;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LibPff.Model
 {
@@ -153,76 +154,114 @@ namespace LibPff.Model
                 return null;
             }
         }
-
-        //public string? MimeBody
-        //{
-        //    get => "Content-Type: text/plain; charset=utf-8\r\n\r\n";
-        //}
-
+        
         public string? MimeBody
         {
             get
             {
-                // 1) Original MIME aus PR_INTERNET_MESSAGE_BODY
+                // 1) Original MIME-Body from PR_INTERNET_MESSAGE_BODY (if available)
                 const uint PR_INTERNET_MESSAGE_BODY = 0x1009;
 
                 if (TryGetRecordValue(PR_INTERNET_MESSAGE_BODY, out string? rawMime) &&
                     !string.IsNullOrWhiteSpace(rawMime))
                 {
+                    // Assumption: Property only contains body but no transport header
                     return rawMime;
                 }
 
-                // 2) Prüfen, ob TransportHeaders MIME-Struktur anzeigen
-                if (TransportHeaders is { } headers &&
-                    headers.Contains("Content-Type:", StringComparison.OrdinalIgnoreCase)
-                    && AttachmentCount > 0)
+                // 2) multipart? MIME body is located in attachment 0
+                if (TransportHeaders?.Contains("multipart/", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    // multipart/signed, multipart/encrypted, multipart/mixed, etc.
-                    // libpff speichert den MIME-Body dann als Attachment 0
                     var att = GetAttachment(0);
                     if (att != null)
                     {
                         using var s = att.OpenDataStream();
-                        using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
-                        return r.ReadToEnd();
+                        if (s != null)
+                        {
+                            using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
+                            var mime = r.ReadToEnd();
+                            if (!string.IsNullOrWhiteSpace(mime))
+                                return mime;
+                        }
+                    }
+
+                    // Fallback: multipart sythesis with boundaries from headers
+                    var boundary = ExtractBoundaryFromHeaders(TransportHeaders);
+                    var plain = BodyPlainText;
+                    var html = BodyHtml;
+
+                    if (!string.IsNullOrWhiteSpace(boundary) &&
+                        (!string.IsNullOrWhiteSpace(plain) || !string.IsNullOrWhiteSpace(html)))
+                    {
+                        var sb = new StringBuilder();
+
+                        // IMPORTANT: No top-level content type, because it's part of the transport header
+                        if (!string.IsNullOrWhiteSpace(plain))
+                        {
+                            sb.Append("--").Append(boundary).Append("\r\n");
+                            sb.Append("Content-Type: text/plain; charset=utf-8\r\n\r\n");
+                            sb.Append(plain).Append("\r\n\r\n");
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(html))
+                        {
+                            sb.Append("--").Append(boundary).Append("\r\n");
+                            sb.Append("Content-Type: text/html; charset=utf-8\r\n\r\n");
+                            sb.Append(html).Append("\r\n\r\n");
+                        }
+
+                        sb.Append("--").Append(boundary).Append("--\r\n");
+                        return sb.ToString();
                     }
                 }
 
-                // 3) Synthetische MIME erzeugen
-                var plain = BodyPlainText;
-                var html = BodyHtml;
+                // 3) No mime structure, synthetic boy without top-level content type
+                var plainFallback = BodyPlainText;
+                var htmlFallback = BodyHtml;
 
-                if (!string.IsNullOrWhiteSpace(plain) && !string.IsNullOrWhiteSpace(html))
+                if (!string.IsNullOrWhiteSpace(plainFallback) && !string.IsNullOrWhiteSpace(htmlFallback))
                 {
                     var boundary = "----=_Part_" + Guid.NewGuid().ToString("N");
+                    var sb = new StringBuilder();
 
-                    return
-                        $"Content-Type: multipart/alternative; boundary=\"{boundary}\"\r\n\r\n" +
-                        $"--{boundary}\r\n" +
-                        "Content-Type: text/plain; charset=utf-8\r\n\r\n" +
-                        plain + "\r\n\r\n" +
-                        $"--{boundary}\r\n" +
-                        "Content-Type: text/html; charset=utf-8\r\n\r\n" +
-                        html + "\r\n\r\n" +
-                        $"--{boundary}--\r\n";
+                    // Hier gibt es keinen bestehenden Content-Type in den TransportHeaders,
+                    // d.h. der EML-Builder sollte in diesem Fall selbst einen passenden Header setzen.
+                    // Wenn du strikt bei "Headers + Body" bleiben willst, kannst du hier
+                    // optional einen Default-Header außerhalb dieser Property erzeugen.
+
+                    sb.Append("--").Append(boundary).Append("\r\n");
+                    sb.Append("Content-Type: text/plain; charset=utf-8\r\n\r\n");
+                    sb.Append(plainFallback).Append("\r\n\r\n");
+
+                    sb.Append("--").Append(boundary).Append("\r\n");
+                    sb.Append("Content-Type: text/html; charset=utf-8\r\n\r\n");
+                    sb.Append(htmlFallback).Append("\r\n\r\n");
+
+                    sb.Append("--").Append(boundary).Append("--\r\n");
+
+                    return sb.ToString();
                 }
 
-                if (!string.IsNullOrWhiteSpace(html))
-                {
-                    return
-                        "Content-Type: text/html; charset=utf-8\r\n\r\n" +
-                        html;
-                }
+                if (!string.IsNullOrWhiteSpace(htmlFallback))
+                    return htmlFallback;
 
-                if (!string.IsNullOrWhiteSpace(plain))
-                {
-                    return
-                        "Content-Type: text/plain; charset=utf-8\r\n\r\n" +
-                        plain;
-                }
+                if (!string.IsNullOrWhiteSpace(plainFallback))
+                    return plainFallback;
 
                 return null;
             }
+        }
+
+        private static string? ExtractBoundaryFromHeaders(string headers)
+        {
+            // Very simple boundary extraction from content type row
+            // for example boundary="----=_NextPart_000_0147_01D89324.DF97C180"
+            var match = Regex.Match(headers, @"boundary\s*=\s*(""(?<b>[^""]+)""|(?<b>[^\r\n;]+))",
+                RegexOptions.IgnoreCase);
+            if (match.Success)
+                return match.Groups["b"].Value.Trim();
+
+            return null;
         }
 
         public async Task<string?> GetBodyPlainTextAsync()
@@ -371,7 +410,9 @@ namespace LibPff.Model
                 IntPtr error = IntPtr.Zero;
 
                 int rc = Native.MessageGetNumberOfAttachments(RawHandle, out int number, out error);
-                if (rc != 1 && number == 0) return 0;
+                if (rc != 1 && number == 0)
+                    return 0;
+
                 ReturnCode.Check(
                     rc,
                     error,
@@ -397,7 +438,11 @@ namespace LibPff.Model
                 int count = AttachmentCount;
 
                 for (int i = 0; i < count; i++)
-                    list.Add(GetAttachment(i)!);
+                {
+                    var att = GetAttachment(i);
+                    if (att != null)
+                        list.Add(att);
+                }
 
                 return list;
             }
@@ -408,6 +453,8 @@ namespace LibPff.Model
             IntPtr error = IntPtr.Zero;
 
             int rc = Native.MessageGetAttachment(RawHandle, index, out nint attachment, out error);
+            if (rc == -1)
+                return null;
 
             ReturnCode.Check(
                 rc,
@@ -521,7 +568,7 @@ namespace LibPff.Model
                 data[0] == 0xFE && data[1] == 0xFF)
                 return Encoding.BigEndianUnicode.GetString(data, 2, data.Length - 2);
 
-            // 4. UTF-8 Heuristik
+            // 4. UTF-8 Heuristic
             try
             {
                 var utf8 = Encoding.UTF8.GetString(data);
