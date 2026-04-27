@@ -154,103 +154,193 @@ namespace LibPff.Model
                 return null;
             }
         }
-        
+
+        //public string? MimeBody
+        //{
+        //    get
+        //    {
+        //        // 1) Original MIME-Body from PR_INTERNET_MESSAGE_BODY (if available)
+        //        const uint PR_INTERNET_MESSAGE_BODY = 0x1009;
+
+        //        if (TryGetRecordValue(PR_INTERNET_MESSAGE_BODY, out string? rawMime) &&
+        //            !string.IsNullOrWhiteSpace(rawMime))
+        //        {
+        //            // Assumption: Property only contains body but no transport header
+        //            return rawMime;
+        //        }
+
+        //        // 2) multipart? MIME body is located in attachment 0
+        //        if (TransportHeaders?.Contains("multipart/", StringComparison.OrdinalIgnoreCase) == true)
+        //        {
+        //            var att = GetAttachment(0);
+        //            if (att != null)
+        //            {
+        //                using var s = att.OpenDataStream();
+        //                if (s != null)
+        //                {
+        //                    using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
+        //                    var mime = r.ReadToEnd();
+        //                    if (!string.IsNullOrWhiteSpace(mime))
+        //                        return mime;
+        //                }
+        //            }
+
+        //            // Fallback: multipart sythesis with boundaries from headers
+        //            var boundary = ExtractBoundaryFromHeaders(TransportHeaders);
+        //            var plain = BodyPlainText;
+        //            var html = BodyHtml;
+
+        //            if (!string.IsNullOrWhiteSpace(boundary) &&
+        //                (!string.IsNullOrWhiteSpace(plain) || !string.IsNullOrWhiteSpace(html)))
+        //            {
+        //                var sb = new StringBuilder();
+
+        //                // IMPORTANT: No top-level content type, because it's part of the transport header
+        //                if (!string.IsNullOrWhiteSpace(plain))
+        //                {
+        //                    sb.Append("--").Append(boundary).Append("\r\n");
+        //                    sb.Append("Content-Type: text/plain; charset=utf-8\r\n\r\n");
+        //                    sb.Append(plain).Append("\r\n\r\n");
+        //                }
+
+        //                if (!string.IsNullOrWhiteSpace(html))
+        //                {
+        //                    sb.Append("--").Append(boundary).Append("\r\n");
+        //                    sb.Append("Content-Type: text/html; charset=utf-8\r\n\r\n");
+        //                    sb.Append(html).Append("\r\n\r\n");
+        //                }
+
+        //                sb.Append("--").Append(boundary).Append("--\r\n");
+        //                return sb.ToString();
+        //            }
+        //        }
+
+        //        // 3) No mime structure, synthetic boy without top-level content type
+        //        var plainFallback = BodyPlainText;
+        //        var htmlFallback = BodyHtml;
+
+        //        if (!string.IsNullOrWhiteSpace(plainFallback) && !string.IsNullOrWhiteSpace(htmlFallback))
+        //        {
+        //            var boundary = "----=_Part_" + Guid.NewGuid().ToString("N");
+        //            var sb = new StringBuilder();
+
+        //            // Hier gibt es keinen bestehenden Content-Type in den TransportHeaders,
+        //            // d.h. der EML-Builder sollte in diesem Fall selbst einen passenden Header setzen.
+        //            // Wenn du strikt bei "Headers + Body" bleiben willst, kannst du hier
+        //            // optional einen Default-Header außerhalb dieser Property erzeugen.
+
+        //            sb.Append("--").Append(boundary).Append("\r\n");
+        //            sb.Append("Content-Type: text/plain; charset=utf-8\r\n\r\n");
+        //            sb.Append(plainFallback).Append("\r\n\r\n");
+
+        //            sb.Append("--").Append(boundary).Append("\r\n");
+        //            sb.Append("Content-Type: text/html; charset=utf-8\r\n\r\n");
+        //            sb.Append(htmlFallback).Append("\r\n\r\n");
+
+        //            sb.Append("--").Append(boundary).Append("--\r\n");
+
+        //            return sb.ToString();
+        //        }
+
+        //        if (!string.IsNullOrWhiteSpace(htmlFallback))
+        //            return htmlFallback;
+
+        //        if (!string.IsNullOrWhiteSpace(plainFallback))
+        //            return plainFallback;
+
+        //        return null;
+        //    }
+        //}
+
+        //private IAttachment? FindMimeBodyAttachment()
+        //{
+        //    return Attachments.FirstOrDefault(a =>
+        //        a.FileName != null && (
+        //            a.MimeType.StartsWith("multipart/") ||
+        //            a.FileName.StartsWith("gpgol", StringComparison.OrdinalIgnoreCase) ||
+        //            a.FileName.Equals("smime.p7m", StringComparison.OrdinalIgnoreCase) ||
+        //            (a.FileName.Equals("winmail.dat", StringComparison.OrdinalIgnoreCase) && a.Size > 1024) ||
+        //            a.FileName.Equals("ATT00001", StringComparison.OrdinalIgnoreCase)
+        //        )
+        //    );
+        //}
+        private IAttachment? FindMimeBodyAttachment()
+        {
+            // 1) multipart/* hat höchste Priorität
+            var multipart = Attachments
+                .FirstOrDefault(a =>
+                    !string.IsNullOrWhiteSpace(a.MimeType) &&
+                    a.MimeType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase));
+
+            if (multipart != null)
+                return multipart;
+
+            // 2) GpgOL
+            var gpg = Attachments
+                .FirstOrDefault(a => a.FileName?.StartsWith("gpgol", StringComparison.OrdinalIgnoreCase) == true);
+            if (gpg != null)
+                return gpg;
+
+            // 3) S/MIME
+            var smime = Attachments
+                .FirstOrDefault(a => a.FileName?.Equals("smime.p7m", StringComparison.OrdinalIgnoreCase) == true);
+            if (smime != null)
+                return smime;
+
+            // 4) TNEF (nur wenn > 1 KB)
+            var tnef = Attachments
+                .FirstOrDefault(a =>
+                    a.FileName?.Equals("winmail.dat", StringComparison.OrdinalIgnoreCase) == true &&
+                    a.Size > 1024);
+            if (tnef != null)
+                return tnef;
+
+            // 5) Outlook generisch
+            var att1 = Attachments
+                .FirstOrDefault(a => a.FileName?.Equals("ATT00001", StringComparison.OrdinalIgnoreCase) == true);
+            if (att1 != null)
+                return att1;
+
+            return null;
+        }
+
+
         public string? MimeBody
         {
             get
             {
-                // 1) Original MIME-Body from PR_INTERNET_MESSAGE_BODY (if available)
+                // 1) Original MIME
                 const uint PR_INTERNET_MESSAGE_BODY = 0x1009;
-
                 if (TryGetRecordValue(PR_INTERNET_MESSAGE_BODY, out string? rawMime) &&
                     !string.IsNullOrWhiteSpace(rawMime))
-                {
-                    // Assumption: Property only contains body but no transport header
                     return rawMime;
-                }
 
-                // 2) multipart? MIME body is located in attachment 0
-                if (TransportHeaders?.Contains("multipart/", StringComparison.OrdinalIgnoreCase) == true)
+                // 2) MIME aus Attachment
+                var mimeAtt = FindMimeBodyAttachment();
+                if (mimeAtt != null)
                 {
-                    var att = GetAttachment(0);
-                    if (att != null)
-                    {
-                        using var s = att.OpenDataStream();
-                        if (s != null)
-                        {
-                            using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
-                            var mime = r.ReadToEnd();
-                            if (!string.IsNullOrWhiteSpace(mime))
-                                return mime;
-                        }
-                    }
-
-                    // Fallback: multipart sythesis with boundaries from headers
-                    var boundary = ExtractBoundaryFromHeaders(TransportHeaders);
-                    var plain = BodyPlainText;
-                    var html = BodyHtml;
-
-                    if (!string.IsNullOrWhiteSpace(boundary) &&
-                        (!string.IsNullOrWhiteSpace(plain) || !string.IsNullOrWhiteSpace(html)))
-                    {
-                        var sb = new StringBuilder();
-
-                        // IMPORTANT: No top-level content type, because it's part of the transport header
-                        if (!string.IsNullOrWhiteSpace(plain))
-                        {
-                            sb.Append("--").Append(boundary).Append("\r\n");
-                            sb.Append("Content-Type: text/plain; charset=utf-8\r\n\r\n");
-                            sb.Append(plain).Append("\r\n\r\n");
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(html))
-                        {
-                            sb.Append("--").Append(boundary).Append("\r\n");
-                            sb.Append("Content-Type: text/html; charset=utf-8\r\n\r\n");
-                            sb.Append(html).Append("\r\n\r\n");
-                        }
-
-                        sb.Append("--").Append(boundary).Append("--\r\n");
-                        return sb.ToString();
-                    }
+                    using var s = mimeAtt.OpenDataStream();
+                    using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
+                    return r.ReadToEnd();
                 }
 
-                // 3) No mime structure, synthetic boy without top-level content type
-                var plainFallback = BodyPlainText;
-                var htmlFallback = BodyHtml;
+                // 3) Fallback: synthetisch
+                var plain = BodyPlainText;
+                var html = BodyHtml;
 
-                if (!string.IsNullOrWhiteSpace(plainFallback) && !string.IsNullOrWhiteSpace(htmlFallback))
+                if (!string.IsNullOrWhiteSpace(plain) && !string.IsNullOrWhiteSpace(html))
                 {
                     var boundary = "----=_Part_" + Guid.NewGuid().ToString("N");
-                    var sb = new StringBuilder();
-
-                    // Hier gibt es keinen bestehenden Content-Type in den TransportHeaders,
-                    // d.h. der EML-Builder sollte in diesem Fall selbst einen passenden Header setzen.
-                    // Wenn du strikt bei "Headers + Body" bleiben willst, kannst du hier
-                    // optional einen Default-Header außerhalb dieser Property erzeugen.
-
-                    sb.Append("--").Append(boundary).Append("\r\n");
-                    sb.Append("Content-Type: text/plain; charset=utf-8\r\n\r\n");
-                    sb.Append(plainFallback).Append("\r\n\r\n");
-
-                    sb.Append("--").Append(boundary).Append("\r\n");
-                    sb.Append("Content-Type: text/html; charset=utf-8\r\n\r\n");
-                    sb.Append(htmlFallback).Append("\r\n\r\n");
-
-                    sb.Append("--").Append(boundary).Append("--\r\n");
-
-                    return sb.ToString();
+                    return
+                        $"--{boundary}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n{plain}\r\n\r\n" +
+                        $"--{boundary}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n{html}\r\n\r\n" +
+                        $"--{boundary}--\r\n";
                 }
 
-                if (!string.IsNullOrWhiteSpace(htmlFallback))
-                    return htmlFallback;
-
-                if (!string.IsNullOrWhiteSpace(plainFallback))
-                    return plainFallback;
-
-                return null;
+                return html ?? plain;
             }
         }
+
 
         private static string? ExtractBoundaryFromHeaders(string headers)
         {
