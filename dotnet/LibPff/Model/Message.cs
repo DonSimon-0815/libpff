@@ -154,9 +154,75 @@ namespace LibPff.Model
             }
         }
 
+        //public string? MimeBody
+        //{
+        //    get => "Content-Type: text/plain; charset=utf-8\r\n\r\n";
+        //}
+
         public string? MimeBody
         {
-            get => "Content-Type: text/plain; charset=utf-8\r\n\r\n";
+            get
+            {
+                // 1) Original MIME aus PR_INTERNET_MESSAGE_BODY
+                const uint PR_INTERNET_MESSAGE_BODY = 0x1009;
+
+                if (TryGetRecordValue(PR_INTERNET_MESSAGE_BODY, out string? rawMime) &&
+                    !string.IsNullOrWhiteSpace(rawMime))
+                {
+                    return rawMime;
+                }
+
+                // 2) Prüfen, ob TransportHeaders MIME-Struktur anzeigen
+                if (TransportHeaders is { } headers &&
+                    headers.Contains("Content-Type:", StringComparison.OrdinalIgnoreCase)
+                    && AttachmentCount > 0)
+                {
+                    // multipart/signed, multipart/encrypted, multipart/mixed, etc.
+                    // libpff speichert den MIME-Body dann als Attachment 0
+                    var att = GetAttachment(0);
+                    if (att != null)
+                    {
+                        using var s = att.OpenDataStream();
+                        using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
+                        return r.ReadToEnd();
+                    }
+                }
+
+                // 3) Synthetische MIME erzeugen
+                var plain = BodyPlainText;
+                var html = BodyHtml;
+
+                if (!string.IsNullOrWhiteSpace(plain) && !string.IsNullOrWhiteSpace(html))
+                {
+                    var boundary = "----=_Part_" + Guid.NewGuid().ToString("N");
+
+                    return
+                        $"Content-Type: multipart/alternative; boundary=\"{boundary}\"\r\n\r\n" +
+                        $"--{boundary}\r\n" +
+                        "Content-Type: text/plain; charset=utf-8\r\n\r\n" +
+                        plain + "\r\n\r\n" +
+                        $"--{boundary}\r\n" +
+                        "Content-Type: text/html; charset=utf-8\r\n\r\n" +
+                        html + "\r\n\r\n" +
+                        $"--{boundary}--\r\n";
+                }
+
+                if (!string.IsNullOrWhiteSpace(html))
+                {
+                    return
+                        "Content-Type: text/html; charset=utf-8\r\n\r\n" +
+                        html;
+                }
+
+                if (!string.IsNullOrWhiteSpace(plain))
+                {
+                    return
+                        "Content-Type: text/plain; charset=utf-8\r\n\r\n" +
+                        plain;
+                }
+
+                return null;
+            }
         }
 
         public async Task<string?> GetBodyPlainTextAsync()
@@ -305,6 +371,7 @@ namespace LibPff.Model
                 IntPtr error = IntPtr.Zero;
 
                 int rc = Native.MessageGetNumberOfAttachments(RawHandle, out int number, out error);
+                if (rc != 1 && number == 0) return 0;
                 ReturnCode.Check(
                     rc,
                     error,
