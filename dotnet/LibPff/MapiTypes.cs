@@ -1,4 +1,4 @@
-﻿namespace LibPff.Model
+﻿namespace LibPff
 {
     // Attachment methods
     public enum AttachmentMethod

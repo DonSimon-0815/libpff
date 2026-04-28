@@ -1,8 +1,6 @@
-﻿using HtmlAgilityPack;
-using LibPff.Interop;
+﻿using LibPff.Interop;
 using LibPff.Utility;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace LibPff.Model
 {
@@ -61,13 +59,6 @@ namespace LibPff.Model
         {
             get
             {
-                if (BodyRtf is { } rtf)
-                {
-                    var html = RtfToHtml(rtf);
-                    if (!string.IsNullOrWhiteSpace(html))
-                        return WrapHtmlUtf8(html);
-                }
-
                 IntPtr error = IntPtr.Zero;
                 int rc = Native.MessageGetHtmlBodySize(RawHandle, out nuint size, out error);
 
@@ -129,106 +120,16 @@ namespace LibPff.Model
             }
         }
 
-        public string? BodyText
+        public string? RawInternetMessageBody
         {
             get
             {
-                if (BodyRtf is { } rtf)
-                {
-                    var html = RtfToHtml(rtf);
-                    var text = HtmlToText(html);
-                    if (!string.IsNullOrWhiteSpace(text))
-                        return text;
-                }
-
-                if (BodyHtml is { } html2)
-                {
-                    var text = HtmlToText(html2);
-                    if (!string.IsNullOrWhiteSpace(text))
-                        return text;
-                }
-
-                if (BodyPlainText is { } plain && !string.IsNullOrWhiteSpace(plain))
-                    return plain;
-
-                return null;
-            }
-        }
-
-        private IAttachment? FindMimeBodyAttachment()
-        {
-            // 1) multipart/* attachments with highes priority (for example multipart/signed)
-            var multipart = Attachments
-                .FirstOrDefault(a =>
-                    !string.IsNullOrWhiteSpace(a.MimeType) &&
-                    a.MimeType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase));
-
-            if (multipart != null)
-                return multipart;
-
-            // 2) GpgOL
-            var gpg = Attachments
-                .FirstOrDefault(a => a.FileName?.StartsWith("gpgol", StringComparison.OrdinalIgnoreCase) == true);
-            if (gpg != null)
-                return gpg;
-
-            // 3) S/MIME
-            var smime = Attachments
-                .FirstOrDefault(a => a.FileName?.Equals("smime.p7m", StringComparison.OrdinalIgnoreCase) == true);
-            if (smime != null)
-                return smime;
-
-            // 4) TNEF (nur wenn > 1 KB)
-            var tnef = Attachments
-                .FirstOrDefault(a =>
-                    a.FileName?.Equals("winmail.dat", StringComparison.OrdinalIgnoreCase) == true &&
-                    a.Size > 1024);
-            if (tnef != null)
-                return tnef;
-
-            // 5) Outlook generisch
-            var att1 = Attachments
-                .FirstOrDefault(a => a.FileName?.Equals("ATT00001", StringComparison.OrdinalIgnoreCase) == true);
-            if (att1 != null)
-                return att1;
-
-            return null;
-        }
-
-
-        public string? MimeBody
-        {
-            get
-            {
-                // 1) Original MIME
                 const uint PR_INTERNET_MESSAGE_BODY = 0x1009;
                 if (TryGetRecordValue(PR_INTERNET_MESSAGE_BODY, out string? rawMime) &&
                     !string.IsNullOrWhiteSpace(rawMime))
                     return rawMime;
 
-                // 2) MIME from Attachment
-                var mimeAtt = FindMimeBodyAttachment();
-                if (mimeAtt != null)
-                {
-                    using var s = mimeAtt.OpenDataStream();
-                    using var r = new StreamReader(s, Encoding.ASCII, detectEncodingFromByteOrderMarks: true);
-                    return r.ReadToEnd();
-                }
-
-                // 3) Fallback: synthetic
-                var plain = BodyPlainText;
-                var html = BodyHtml;
-
-                if (!string.IsNullOrWhiteSpace(plain) && !string.IsNullOrWhiteSpace(html))
-                {
-                    var boundary = "----=_Part_" + Guid.NewGuid().ToString("N");
-                    return
-                        $"--{boundary}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n{plain}\r\n\r\n" +
-                        $"--{boundary}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n{html}\r\n\r\n" +
-                        $"--{boundary}--\r\n";
-                }
-
-                return html ?? plain;
+                return null;
             }
         }
 
@@ -497,28 +398,7 @@ namespace LibPff.Model
 
             return false;
         }
-
-        private string? RtfToHtml(string? rtf)
-        {
-            if (string.IsNullOrWhiteSpace(rtf))
-                return null;
-
-            try { return RtfPipe.Rtf.ToHtml(rtf); }
-            catch { return null; }
-        }
-
-        private string? HtmlToText(string? html)
-        {
-            if (string.IsNullOrWhiteSpace(html))
-                return null;
-
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-
-            var text = doc.DocumentNode.InnerText;
-            return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
-        }
-
+        
         private static string DecodeBestEffort(byte[] data)
         {
             // 1. UTF-8 BOM
@@ -564,5 +444,41 @@ namespace LibPff.Model
                 html +
                 "</body></html>";
         }
+
+        public bool TryGetProperty(EntryType type, out object? value)
+        {
+            uint id = (uint)type;
+
+            // 1) D
+            if (TryGetRecordValue(id, out value))
+                return true;
+
+            // 2) Unicode-Variant
+            //    MAPI-Rule: Unicode = ASCII-ID + 1
+            if (id < 0x8000)
+            {
+                uint unicodeId = id + 1;
+                if (TryGetRecordValue(unicodeId, out value))
+                    return true;
+            }
+
+            // 3) Multi-Value-Variant
+            //    MAPI-Rule: MultiValue = ID | 0x1000
+            uint multiId = id | 0x1000;
+            if (TryGetRecordValue(multiId, out value))
+                return true;
+
+            // 4) Unicode-MultiValue
+            if (id < 0x8000)
+            {
+                uint unicodeMultiId = (id + 1) | 0x1000;
+                if (TryGetRecordValue(unicodeMultiId, out value))
+                    return true;
+            }
+
+            value = null;
+            return false;
+        }
+
     }
 }

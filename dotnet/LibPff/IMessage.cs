@@ -27,14 +27,9 @@
         string? BodyRtf { get; }
 
         /// <summary>
-        /// Gets the Body (HTML→Text, Plaintext, MIME-Fallback)
+        /// Gets the raw internet message body
         /// </summary>
-        string? BodyText { get; }
-
-        /// <summary>
-        /// Gets the MIME body
-        /// </summary>
-        public string? MimeBody { get; }
+        string? RawInternetMessageBody { get; }
 
         /// <summary>
         /// Asynchronously retrieve the plain text body. Implementations may load lazily.
@@ -98,6 +93,11 @@
         /// <param name="index">Zero based index of the attachment</param>
         /// <returns>Attachment</returns>
         IAttachment? GetAttachment(int index);
+
+        /// <summary>
+        /// Try to get a property
+        /// </summary>
+        bool TryGetProperty(EntryType type, out object? value);
 
         /// <summary>
         /// Try to get an entry value interpreted as UTF8 string.
