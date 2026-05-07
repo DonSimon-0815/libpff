@@ -9,14 +9,14 @@ namespace LibPff.Interop
     {
         private readonly INativeAdapter _native;
 
+        public override bool IsInvalid => handle == nint.Zero;
+
         public ErrorHandle(nint handle, INativeAdapter native, bool ownsHandle)
             : base(nint.Zero, ownsHandle)
         {
             _native = native;
             SetHandle(handle);
         }
-
-        public override bool IsInvalid => handle == nint.Zero;
 
         protected override bool ReleaseHandle()
         {

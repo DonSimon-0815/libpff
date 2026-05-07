@@ -24,7 +24,7 @@ namespace LibPff.Model
 
         public File(string path)
         {
-            Native = NativeAdapterFactory.Create();
+            Native = new NativeAdapter();
             Path = path ?? throw new ArgumentNullException(nameof(path));
 
             IntPtr error = IntPtr.Zero;

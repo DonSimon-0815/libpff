@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LibPff.Interop
 {
-    public interface INativeAdapter
+    internal interface INativeAdapter
     {
         int AttachmentGetType(IntPtr attachment, out int attachment_type, out IntPtr error);
         int AttachmentGetDataSize(IntPtr attachment, out long size, out IntPtr error);

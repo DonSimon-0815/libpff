@@ -4,29 +4,39 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet Package Info -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>LibPff</PackageId>
+    <Version>0.0.8-alpha</Version>
+    <Authors>Daniel</Authors>
+    <Description>.NET wrapper for libpff with MAPI-compatible interfaces.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/chronologiq</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/chronologiq</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Win32 -->
-    <Content Include="..\..\msvscpp\Release\*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>lib\win32\%(Filename)%(Extension)</Link>
-    </Content>
-
-    <!-- Win64 -->
-    <Content Include="..\..\msvscpp\x64\Release\*.dll">
+    <None Include="..\..\msvscpp\Release\*.dll"
+          Pack="true"
+          PackagePath="runtimes/win-x86/native/">
+      <Link>runtimes/win-x86/native/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>lib\win64\%(Filename)%(Extension)</Link>
-    </Content>
-  
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
+    
+    <None Include="..\..\msvscpp\x64\Release\*.dll"
+          Pack="true"
+          PackagePath="runtimes/win-x64/native/">
+      <Link>runtimes/win-x64/native/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MimeKit" Version="4.16.0" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-  </PropertyGroup>
 
 </Project>
